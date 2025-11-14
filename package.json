@@ -1,6 +1,6 @@
 {
   "name": "@revenium/openai",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Transparent TypeScript middleware for automatic Revenium usage tracking with OpenAI",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -25,15 +25,18 @@
     "dev": "tsc --watch",
     "clean": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', {recursive: true, force: true})\"",
     "prepublishOnly": "npm run clean && npm run build",
-    "example:openai-basic": "npm run build && npx ts-node examples/openai-basic.ts",
-    "example:openai-streaming": "npm run build && npx ts-node examples/openai-streaming.ts",
-    "example:azure-basic": "npm run build && npx ts-node examples/azure-basic.ts",
-    "example:azure-streaming": "npm run build && npx ts-node examples/azure-streaming.ts",
-    "example": "npm run example:openai-basic",
-    "example:openai-responses-basic": "npm run build && npx ts-node examples/openai-responses-basic.ts",
-    "example:openai-responses-streaming": "npm run build && npx ts-node examples/openai-responses-streaming.ts",
-    "example:azure-responses-basic": "npm run build && npx ts-node examples/azure-responses-basic.ts",
-    "example:azure-responses-streaming": "npm run build && npx ts-node examples/azure-responses-streaming.ts"
+    "example:getting-started": "npm run build && npx tsx examples/getting_started.ts",
+    "example:openai-basic": "npm run build && npx tsx examples/openai/basic.ts",
+    "example:openai-metadata": "npm run build && npx tsx examples/openai/metadata.ts",
+    "example:openai-stream": "npm run build && npx tsx examples/openai/streaming.ts",
+    "example:openai-res-basic": "npm run build && npx tsx examples/openai/responses-basic.ts",
+    "example:openai-res-embed": "npm run build && npx tsx examples/openai/responses-embed.ts",
+    "example:openai-res-stream": "npm run build && npx tsx examples/openai/responses-streaming.ts",
+    "example:azure-basic": "npm run build && npx tsx examples/azure/basic.ts",
+    "example:azure-stream": "npm run build && npx tsx examples/azure/stream.ts",
+    "example:azure-res-basic": "npm run build && npx tsx examples/azure/responses-basic.ts",
+    "example:azure-res-stream": "npm run build && npx tsx examples/azure/responses-stream.ts",
+    "example": "npm run example:getting-started"
   },
   "keywords": [
     "openai",
@@ -68,14 +71,18 @@
   },
   "files": [
     "dist/**/*",
-    "src/**/*",
     "examples/**/*",
+    "!examples/.claude/**",
+    "!examples/**/*.log",
     ".env.example",
     "README.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CODE_OF_CONDUCT.md"
   ],
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }

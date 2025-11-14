@@ -6,9 +6,14 @@
  */
 
 // Re-export all configuration functionality
-export { loadConfigFromEnv, loadAzureConfigFromEnv, hasAzureConfigInEnv } from './loader.js';
+export {
+  loadConfigFromEnv,
+  loadAzureConfigFromEnv,
+  hasAzureConfigInEnv,
+} from "./loader.js";
 
-export { validateConfig, validateAzureConfig } from './validator.js';
+// Note: validateAzureConfig is exported from src/core/providers/index.ts
+export { validateConfig } from "./validator.js";
 
 export {
   getConfig,
@@ -17,7 +22,7 @@ export {
   setLogger,
   initializeConfig,
   defaultLogger,
-} from './manager.js';
+} from "./manager.js";
 
 // Export Azure-specific configuration
-export * from './azure-config.js';
+export * from "./azure-config.js";

@@ -5,8 +5,11 @@
  * and provide consistent error logging and recovery strategies.
  */
 
-import { Logger } from '../types/index.js';
-import { ERROR_MESSAGE_PATTERNS_TYPE_CONFIG, MESSAGE_PATTERNS_TYPE_NETWORK } from './constants.js';
+import { Logger } from "../types";
+import {
+  ERROR_MESSAGE_PATTERNS_TYPE_CONFIG,
+  MESSAGE_PATTERNS_TYPE_NETWORK,
+} from "./constants.js";
 
 /**
  * Error handling strategy configuration
@@ -30,9 +33,10 @@ export interface ErrorHandlingStrategy {
 const DEFAULT_STRATEGY: Required<ErrorHandlingStrategy> = {
   logError: true,
   rethrow: true,
-  messagePrefix: '',
+  messagePrefix: "",
   fallbackValue: undefined,
-  transformError: (error: unknown) => (error instanceof Error ? error : new Error(String(error))),
+  transformError: (error: unknown) =>
+    error instanceof Error ? error : new Error(String(error)),
 };
 
 /**
@@ -176,7 +180,7 @@ export async function withRetry<T>(
           nextRetryIn: delayMs,
         });
       }
-      await new Promise(resolve => setTimeout(resolve, delayMs));
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
@@ -193,7 +197,7 @@ export class ValidationError extends Error {
     public readonly context?: Record<string, unknown>
   ) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
@@ -203,7 +207,7 @@ export class ConfigurationError extends Error {
     public readonly context?: Record<string, unknown>
   ) {
     super(message);
-    this.name = 'ConfigurationError';
+    this.name = "ConfigurationError";
   }
 }
 
@@ -213,7 +217,7 @@ export class NetworkError extends Error {
     public readonly context?: Record<string, unknown>
   ) {
     super(message);
-    this.name = 'NetworkError';
+    this.name = "NetworkError";
   }
 }
 
@@ -221,31 +225,41 @@ export class NetworkError extends Error {
  * Error classification utility
  */
 export function classifyError(error: unknown): {
-  type: 'validation' | 'configuration' | 'network' | 'unknown';
+  type: "validation" | "configuration" | "network" | "unknown";
   message: string;
   isRetryable: boolean;
 } {
   if (error instanceof ValidationError) {
-    return { type: 'validation', message: error.message, isRetryable: false };
+    return { type: "validation", message: error.message, isRetryable: false };
   }
 
   if (error instanceof ConfigurationError) {
-    return { type: 'configuration', message: error.message, isRetryable: false };
+    return {
+      type: "configuration",
+      message: error.message,
+      isRetryable: false,
+    };
   }
 
   if (error instanceof NetworkError) {
-    return { type: 'network', message: error.message, isRetryable: true };
+    return { type: "network", message: error.message, isRetryable: true };
   }
 
   const message = error instanceof Error ? error.message : String(error);
 
   // Classify based on message patterns
-  if (MESSAGE_PATTERNS_TYPE_NETWORK.some(pattern => message.includes(pattern))) {
-    return { type: 'network', message, isRetryable: true };
+  if (
+    MESSAGE_PATTERNS_TYPE_NETWORK.some((pattern) => message.includes(pattern))
+  ) {
+    return { type: "network", message, isRetryable: true };
   }
 
-  if (ERROR_MESSAGE_PATTERNS_TYPE_CONFIG.some(pattern => message.includes(pattern))) {
-    return { type: 'configuration', message, isRetryable: false };
+  if (
+    ERROR_MESSAGE_PATTERNS_TYPE_CONFIG.some((pattern) =>
+      message.includes(pattern)
+    )
+  ) {
+    return { type: "configuration", message, isRetryable: false };
   }
-  return { type: 'unknown', message, isRetryable: false };
+  return { type: "unknown", message, isRetryable: false };
 }

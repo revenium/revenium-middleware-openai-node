@@ -5,9 +5,9 @@
  * instead of nested conditionals.
  */
 
-import { Provider, ProviderInfo, AzureConfig } from '../types/index.js';
-import { OpenAIClientInstance } from '../types/function-parameters.js';
-import { Logger } from '../types/index.js';
+import { Provider, ProviderInfo, AzureConfig } from "../types/index.js";
+import { OpenAIClientInstance } from "../types/function-parameters.js";
+import { Logger } from "../types/index.js";
 
 /**
  * Provider detection strategy interface
@@ -28,42 +28,41 @@ interface ProviderDetectionStrategy {
  */
 const DETECTION_STRATEGIES: ProviderDetectionStrategy[] = [
   {
-    name: 'Constructor Name',
+    name: "Constructor Name",
     priority: 100,
-    detect: client => {
-      return client?.constructor?.name?.includes('Azure') || false;
+    detect: (client) => {
+      return client?.constructor?.name?.includes("Azure") || false;
     },
-    getContext: client => ({
+    getContext: (client) => ({
       constructorName: client?.constructor?.name,
     }),
   },
   {
-    name: 'Base URL',
+    name: "Base URL",
     priority: 90,
-    detect: client => {
+    detect: (client) => {
       const baseUrl = getBaseUrlString(client);
-      return baseUrl?.toLowerCase().includes('azure') || false;
+      return baseUrl?.toLowerCase().includes("azure") || false;
     },
-    getContext: client => ({
+    getContext: (client) => ({
       baseURL: getBaseUrlString(client),
     }),
   },
   {
-    name: 'Environment Variables',
+    name: "Environment Variables",
     priority: 80,
-    detect: client => {
+    detect: (client) => {
       // Only use env vars if not explicitly OpenAI
       const baseUrl = getBaseUrlString(client);
       const isExplicitlyOpenAI =
-        baseUrl?.includes('api.openai.com') ||
-        (client?.constructor?.name?.toLowerCase().includes('openai') &&
-          !client?.constructor?.name?.toLowerCase().includes('azure'));
+        baseUrl?.includes("api.openai.com") ||
+        (client?.constructor?.name?.toLowerCase().includes("openai") &&
+          !client?.constructor?.name?.toLowerCase().includes("azure"));
 
       return !isExplicitlyOpenAI && !!process.env.AZURE_OPENAI_ENDPOINT;
     },
     getContext: () => ({
       hasAzureEndpoint: !!process.env.AZURE_OPENAI_ENDPOINT,
-      hasAzureDeployment: !!process.env.AZURE_OPENAI_DEPLOYMENT,
       hasAzureApiKey: !!process.env.AZURE_OPENAI_API_KEY,
     }),
   },
@@ -75,7 +74,9 @@ const DETECTION_STRATEGIES: ProviderDetectionStrategy[] = [
 function getBaseUrlString(client: OpenAIClientInstance): string | undefined {
   if (!client?.baseURL) return undefined;
 
-  return typeof client.baseURL === 'string' ? client.baseURL : client.baseURL.toString();
+  return typeof client.baseURL === "string"
+    ? client.baseURL
+    : client.baseURL.toString();
 }
 
 /**
@@ -91,9 +92,15 @@ function getBaseUrlString(client: OpenAIClientInstance): string | undefined {
 export function detectProviderStrategy(
   client: OpenAIClientInstance,
   logger?: Logger
-): { provider: Provider; strategy?: string; context?: Record<string, unknown> } {
+): {
+  provider: Provider;
+  strategy?: string;
+  context?: Record<string, unknown>;
+} {
   // Sort strategies by priority (highest first)
-  const sortedStrategies = [...DETECTION_STRATEGIES].sort((a, b) => b.priority - a.priority);
+  const sortedStrategies = [...DETECTION_STRATEGIES].sort(
+    (a, b) => b.priority - a.priority
+  );
 
   for (const strategy of sortedStrategies) {
     try {
@@ -121,7 +128,9 @@ export function detectProviderStrategy(
 
   // Default to OpenAI
   if (logger) {
-    logger.debug('Standard OpenAI provider detected (no Azure indicators found)');
+    logger.debug(
+      "Standard OpenAI provider detected (no Azure indicators found)"
+    );
   }
 
   return { provider: Provider.OPENAI };
@@ -137,21 +146,18 @@ interface AzureConfigStrategy {
 
 const AZURE_CONFIG_STRATEGIES: AzureConfigStrategy[] = [
   {
-    name: 'Client BaseURL',
-    gather: client => {
+    name: "Client BaseURL",
+    gather: (client) => {
       const baseUrl = getBaseUrlString(client);
       return baseUrl ? { endpoint: baseUrl } : {};
     },
   },
   {
-    name: 'Environment Variables',
+    name: "Environment Variables",
     gather: () => ({
       endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-      deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
-      apiVersion: process.env.AZURE_OPENAI_API_VERSION || '2024-12-01-preview',
+      apiVersion: process.env.AZURE_OPENAI_API_VERSION,
       apiKey: process.env.AZURE_OPENAI_API_KEY,
-      tenantId: process.env.AZURE_OPENAI_TENANT_ID,
-      resourceGroup: process.env.AZURE_OPENAI_RESOURCE_GROUP,
     }),
   },
 ];
@@ -188,9 +194,8 @@ export function gatherAzureConfigStrategy(
   }
 
   if (logger) {
-    logger.debug('Azure configuration gathered', {
+    logger.debug("Azure configuration gathered", {
       hasEndpoint: !!config.endpoint,
-      hasDeployment: !!config.deployment,
       hasApiKey: !!config.apiKey,
       apiVersion: config.apiVersion,
     });
@@ -206,7 +211,10 @@ export function gatherAzureConfigStrategy(
  * @param logger - Logger for debugging
  * @returns Complete provider information
  */
-export function createProviderInfo(client: OpenAIClientInstance, logger?: Logger): ProviderInfo {
+export function createProviderInfo(
+  client: OpenAIClientInstance,
+  logger?: Logger
+): ProviderInfo {
   const detection = detectProviderStrategy(client, logger);
 
   if (detection.provider === Provider.AZURE_OPENAI) {
@@ -239,13 +247,15 @@ export function validateProviderInfo(providerInfo: ProviderInfo): {
   const warnings: string[] = [];
   if (providerInfo.isAzure) {
     if (!providerInfo.azureConfig) {
-      warnings.push('Azure provider detected but no Azure configuration available');
+      warnings.push(
+        "Azure provider detected but no Azure configuration available"
+      );
     } else {
       if (!providerInfo.azureConfig.endpoint) {
-        warnings.push('Azure configuration missing endpoint');
+        warnings.push("Azure configuration missing endpoint");
       }
       if (!providerInfo.azureConfig.apiKey) {
-        warnings.push('Azure configuration missing API key');
+        warnings.push("Azure configuration missing API key");
       }
     }
   }

@@ -181,5 +181,3 @@ gitleaks-report.json
 gitleaks*.json
 
 # Untracked example files
-examples/openai-function-calling.ts
-examples/openai-vision.ts

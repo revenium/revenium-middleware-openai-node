@@ -5,14 +5,43 @@
  * Extracted from provider.ts for better organization.
  */
 
-import { Provider, ProviderInfo, AzureConfig } from '../../types/index.js';
-import { OpenAIClientInstance } from '../../types/function-parameters.js';
-import { isOpenAIClientInstance } from '../../utils/type-guards.js';
-import { createProviderInfo, validateProviderInfo } from '../../utils/provider-detection.js';
-import { getLogger } from '../config/index.js';
+import { Provider, ProviderInfo, AzureConfig, Config } from "../../types";
+import { OpenAIClientInstance } from "../../types/function-parameters.js";
+import { isOpenAIClientInstance } from "../../utils/type-guards.js";
+import {
+  createProviderInfo,
+  validateProviderInfo,
+} from "../../utils/provider-detection.js";
+import { getLogger } from "../config";
 
 // Global logger
 const logger = getLogger();
+
+/**
+ * Detect provider from configuration
+ *
+ * @param config - Configuration object
+ * @returns ProviderInfo with detection results
+ */
+export function detectProviderFromConfig(config: Config): ProviderInfo {
+  // Check if Azure credentials are configured
+  if (config.azure?.apiKey && config.azure?.endpoint) {
+    logger.debug("Azure OpenAI credentials detected, using Azure OpenAI");
+    return {
+      provider: Provider.AZURE_OPENAI,
+      isAzure: true,
+      azureConfig: config.azure,
+    };
+  }
+
+  // Default to OpenAI
+  logger.debug("No Azure configuration detected, using OpenAI native API");
+  return {
+    provider: Provider.OPENAI,
+    isAzure: false,
+    azureConfig: undefined,
+  };
+}
 
 /**
  * Detect Azure OpenAI provider from client instance
@@ -23,7 +52,7 @@ const logger = getLogger();
 export function detectProvider(client: OpenAIClientInstance): ProviderInfo {
   // Validate client instance
   if (!isOpenAIClientInstance(client)) {
-    logger.warn('Invalid OpenAI client instance provided to detectProvider');
+    logger.warn("Invalid OpenAI client instance provided to detectProvider");
     return {
       provider: Provider.OPENAI,
       isAzure: false,
@@ -38,25 +67,25 @@ export function detectProvider(client: OpenAIClientInstance): ProviderInfo {
     // Validate the result
     const validation = validateProviderInfo(providerInfo);
     if (validation.warnings.length > 0) {
-      logger.warn('Provider detection completed with warnings', {
+      logger.warn("Provider detection completed with warnings", {
         warnings: validation.warnings,
       });
     }
 
     // Log final result
     if (providerInfo.isAzure) {
-      logger.info('Azure OpenAI provider detected', {
+      logger.info("Azure OpenAI provider detected", {
         provider: providerInfo.provider,
         hasAzureConfig: !!providerInfo.azureConfig,
-        endpoint: providerInfo.azureConfig?.endpoint ? '[REDACTED]' : undefined,
+        endpoint: providerInfo.azureConfig?.endpoint ? "[REDACTED]" : undefined,
       });
     } else {
-      logger.debug('Standard OpenAI provider detected');
+      logger.debug("Standard OpenAI provider detected");
     }
 
     return providerInfo;
   } catch (error) {
-    logger.warn('Error during provider detection, defaulting to OpenAI', {
+    logger.warn("Error during provider detection, defaulting to OpenAI", {
       error: error instanceof Error ? error.message : String(error),
     });
 
@@ -99,33 +128,31 @@ export function validateAzureConfig(config: AzureConfig): {
 
   // Required fields for basic Azure OpenAI operation
   if (!config.endpoint) {
-    missingFields.push('endpoint');
+    missingFields.push("endpoint");
   }
 
   if (!config.apiKey) {
-    missingFields.push('apiKey');
+    missingFields.push("apiKey");
   }
 
   // Optional but recommended fields
-  if (!config.deployment) {
-    warnings.push('deployment name not specified - may need to be included in model parameter');
-  }
-
   if (!config.apiVersion) {
-    warnings.push('API version not specified - using default 2024-12-01-preview');
+    warnings.push(
+      "API version not specified - using default 2024-12-01-preview"
+    );
   }
 
   // Validate endpoint format
   if (config.endpoint) {
     try {
       new URL(config.endpoint);
-      if (!config.endpoint.toLowerCase().includes('azure')) {
+      if (!config.endpoint.toLowerCase().includes("azure")) {
         warnings.push(
           'endpoint does not contain "azure" - please verify this is an Azure OpenAI endpoint'
         );
       }
     } catch (error) {
-      missingFields.push('valid endpoint URL');
+      missingFields.push("valid endpoint URL");
     }
   }
 
@@ -148,12 +175,12 @@ export function getProviderMetadata(providerInfo: ProviderInfo): {
 } {
   if (providerInfo.isAzure) {
     return {
-      provider: 'Azure',
-      modelSource: 'AZURE_OPENAI',
+      provider: "Azure",
+      modelSource: "AZURE_OPENAI",
     };
   }
   return {
-    provider: 'OpenAI',
-    modelSource: 'OPENAI',  // Provider name when calling directly per spec
+    provider: "OpenAI",
+    modelSource: "OPENAI", // Provider name when calling directly per spec
   };
 }

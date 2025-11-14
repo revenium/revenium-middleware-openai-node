@@ -5,19 +5,18 @@
  * Extracted from tracking.ts for single responsibility.
  */
 
-import { randomUUID } from 'crypto';
-import { ReveniumPayload, ProviderInfo } from '../../types/index.js';
+import { randomUUID } from "crypto";
+import { ReveniumPayload, ProviderInfo } from "../../types";
 import {
   OpenAIChatResponse,
   OpenAIEmbeddingResponse,
   OpenAIChatRequest,
   OpenAIEmbeddingRequest,
-} from '../../types/function-parameters.js';
-import { getLogger } from '../config/index.js';
-import { mapStopReason } from '../../utils/stop-reason-mapper.js';
-import { buildMetadataFields } from '../../utils/metadata-builder.js';
-import { resolveAzureModelName } from '../../utils/azure-model-resolver.js';
-import { getProviderMetadata } from '../providers/index.js';
+} from "../../types/function-parameters.js";
+import { getLogger } from "../config";
+import { mapStopReason } from "../../utils/stop-reason-mapper.js";
+import { buildMetadataFields } from "../../utils/metadata-builder.js";
+import { getProviderMetadata } from "../providers";
 
 // Global logger
 const logger = getLogger();
@@ -37,7 +36,7 @@ const logger = getLogger();
  * @returns Constructed payload for Revenium API
  */
 export function buildPayload(
-  operationType: 'CHAT' | 'EMBED',
+  operationType: "CHAT" | "EMBED",
   response: OpenAIChatResponse | OpenAIEmbeddingResponse,
   request: OpenAIChatRequest | OpenAIEmbeddingRequest,
   startTime: number,
@@ -48,32 +47,22 @@ export function buildPayload(
   const requestTime = new Date(startTime).toISOString();
   const usage = response.usage;
 
-  // Resolve model name for Azure deployments
-  const originalModel = response.model;
-  const resolvedModel = providerInfo?.isAzure
-    ? resolveAzureModelName(originalModel)
-    : originalModel;
+  // For Azure, use the deployment name as-is
+  // The deployment name is what the user provided and should be sent to Revenium
+  const modelName = response.model;
 
   // Get provider metadata (fallback: OpenAI direct)
   const providerMetadata = providerInfo
     ? getProviderMetadata(providerInfo)
-    : { provider: 'OpenAI', modelSource: 'OPENAI' };
-
-  if (providerInfo?.isAzure && resolvedModel !== originalModel) {
-    logger.debug('Azure model name resolved for pricing', {
-      deployment: originalModel,
-      resolved: resolvedModel,
-      provider: providerMetadata.provider,
-    });
-  }
+    : { provider: "OpenAI", modelSource: "OPENAI" };
 
   // Build metadata fields using utility (eliminates repetitive spreading)
   const metadataFields = buildMetadataFields(request.usageMetadata);
 
   // Common fields for all operations
   const commonPayload = {
-    costType: 'AI' as const,
-    model: resolvedModel, // Use resolved model name for accurate pricing
+    costType: "AI" as const,
+    model: modelName, // Use model/deployment name as-is
     responseTime: now,
     requestDuration: duration,
     provider: providerMetadata.provider,
@@ -89,7 +78,7 @@ export function buildPayload(
     ...metadataFields,
 
     // Fixed middleware source identifier (spec format: revenium-{provider}-{language})
-    middlewareSource: 'revenium-openai-node',
+    middlewareSource: "revenium-openai-node",
 
     // Backend calculates costs
     inputTokenCost: undefined,
@@ -99,20 +88,20 @@ export function buildPayload(
 
   // Operation-specific fields
 
-  if (operationType !== 'CHAT') {
+  if (operationType !== "CHAT") {
     // For embeddings, we don't need the response cast since we use commonPayload
     return {
       ...commonPayload,
-      operationType: 'EMBED',
+      operationType: "EMBED",
       transactionId: `embed-${randomUUID()}`,
       outputTokenCount: 0,
       // Embeddings don't support reasoning or caching
       reasoningTokenCount: undefined,
       cacheCreationTokenCount: undefined,
       cacheReadTokenCount: undefined,
-      stopReason: 'END',
+      stopReason: "END",
       isStreamed: false,
-      timeToFirstToken: undefined,  // Not applicable for embeddings
+      timeToFirstToken: undefined, // Not applicable for embeddings
     };
   }
   const chatResponse = response as OpenAIChatResponse;
@@ -120,7 +109,7 @@ export function buildPayload(
 
   return {
     ...commonPayload,
-    operationType: 'CHAT',
+    operationType: "CHAT",
     transactionId: chatResponse.id || `chat-${randomUUID()}`,
     outputTokenCount: chatUsage.completion_tokens || 0,
     // Leave null for models without reasoning capabilities (API spec)

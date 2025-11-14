@@ -8,9 +8,10 @@
 // Re-export all provider functionality
 export {
   detectProvider,
+  detectProviderFromConfig,
   hasAzureConfig,
   validateAzureConfig,
   getProviderMetadata,
-} from './detector.js';
+} from "./detector.js";
 
-export { gatherAzureConfig } from '../config/azure-config.js';
+export { gatherAzureConfig } from "../config/azure-config.js";

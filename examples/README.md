@@ -1,303 +1,381 @@
 # Revenium OpenAI Middleware - Examples
 
-**TypeScript-first** examples demonstrating automatic Revenium usage tracking with the OpenAI SDK.
+This directory contains examples demonstrating how to use the Revenium OpenAI middleware.
 
-## Getting Started - Step by Step
+## Prerequisites
 
-### 1. Create Your Project
+Before running the examples, make sure you have:
 
-```bash
-# Create project directory
-mkdir my-openai-project
-cd my-openai-project
+1. **Node.js 16 or later** installed
+2. **Revenium API Key** - Get one from [Revenium Dashboard](https://app.revenium.ai)
+3. **OpenAI API Key** - Get one from [OpenAI Platform](https://platform.openai.com)
+4. **(Optional) Azure OpenAI credentials** - For Azure examples
 
-# Initialize Node.js project
-npm init -y
-```
+## Setup
 
-### 2. Install Dependencies
+1. **Clone the repository** (if you haven't already):
 
-```bash
-npm install @revenium/openai openai dotenv
-npm install -D typescript tsx @types/node  # For TypeScript
-```
+   ```bash
+   git clone https://github.com/revenium/revenium-middleware-openai-node.git
+   cd revenium-middleware-openai-node
+   ```
 
-### 3. Environment Setup
+2. **Install dependencies**:
 
-Create a `.env` file in your project root:
+   ```bash
+   npm install
+   ```
 
-```bash
-# Required
-REVENIUM_METERING_API_KEY=hak_your_revenium_api_key
-OPENAI_API_KEY=sk_your_openai_api_key
+3. **Configure environment variables**:
 
-# Optional
-REVENIUM_METERING_BASE_URL=https://api.revenium.ai
-REVENIUM_DEBUG=false
+   Copy the `.env.example` file to `.env` and edit it with your API keys:
 
-# Optional - For Azure OpenAI examples
-AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com/
-AZURE_OPENAI_API_KEY=your-azure-api-key
-AZURE_OPENAI_DEPLOYMENT=your-deployment-name
-AZURE_OPENAI_API_VERSION=2024-12-01-preview
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-### 4. Run Examples
+   See [.env.example](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/.env.example) for all available configuration options.
 
-**If you cloned from GitHub:**
+## Examples
 
-```bash
-# Run examples directly
-npx tsx examples/getting_started.ts
-npx tsx examples/openai-basic.ts
-npx tsx examples/openai-streaming.ts
-```
+### 1. Getting Started
 
-**If you installed via npm:**
-
-Examples are included in your `node_modules/@revenium/openai/examples/` directory:
-
-```bash
-npx tsx node_modules/@revenium/openai/examples/getting_started.ts
-npx tsx node_modules/@revenium/openai/examples/openai-basic.ts
-npx tsx node_modules/@revenium/openai/examples/openai-streaming.ts
-```
-
-## Available Examples
-
-### `getting_started.ts` - Simple Entry Point
+**File:** `getting_started.ts`
 
 The simplest example to get you started with Revenium tracking:
 
-- **Minimal setup** - Just import, configure, and start tracking
-- **Complete metadata example** - Shows all 11 optional metadata fields in comments
-- **Ready to customize** - Uncomment the metadata section to add tracking context
+- Initialize the middleware
+- Create a basic chat completion
+- Display response and usage metrics
 
-**Key Features:**
+**Run:**
 
-- Auto-initialization from environment variables
-- Native `usageMetadata` support via module augmentation
-- All metadata fields documented with examples
-- Single API call demonstration
+```bash
+npm run example:getting-started
+# or
+npx tsx examples/getting_started.ts
+```
 
-**Perfect for:** First-time users, quick validation, understanding metadata structure
+**What it does:**
 
-**See the file for complete code examples.**
+- Loads configuration from environment variables
+- Creates a simple chat completion request
+- Automatically sends metering data to Revenium API
+- Displays the response
 
-### `openai-basic.ts` - Chat Completions and Embeddings
+---
 
-Demonstrates standard OpenAI API usage with automatic tracking:
+### 2. OpenAI Basic
 
-- **Chat completions** - Basic chat API with metadata tracking
-- **Embeddings** - Text embedding generation with usage tracking
-- **Multiple API calls** - Batch operations with consistent metadata
+**File:** `openai/basic.ts`
 
-**Key Features:**
+Demonstrates standard OpenAI API usage:
 
-- TypeScript module augmentation for native `usageMetadata` support
-- Full type safety with IntelliSense
-- Comprehensive metadata examples
-- Error handling patterns
+- Chat completions with metadata
+- Embeddings generation
+- Multiple API calls
 
-**Perfect for:** Understanding basic OpenAI API patterns with tracking
+**Run:**
 
-**See the file for complete code examples.**
+```bash
+npm run example:openai-basic
+# or
+npx tsx examples/openai/basic.ts
+```
 
-### `openai-streaming.ts` - Real-time Streaming
+**What it does:**
 
-Demonstrates streaming responses with automatic token tracking:
+- Creates chat completions with metadata tracking
+- Generates text embeddings
+- Demonstrates metadata usage for tracking
 
-- **Streaming chat completions** - Real-time token streaming with metadata
-- **Batch embeddings** - Multiple embedding requests efficiently
-- **Stream processing** - Type-safe event handling
+---
 
-**Key Features:**
+### 3. OpenAI Metadata
 
-- Automatic tracking when stream completes
-- Real-time token counting
-- Time-to-first-token metrics
-- Stream error handling
+**File:** `openai/metadata.ts`
 
-**Perfect for:** Real-time applications, chatbots, interactive AI assistants
+Demonstrates all available metadata fields:
 
-**See the file for complete code examples.**
+- Complete metadata structure
+- All optional fields documented
+- Subscriber information
 
-### `openai-responses-basic.ts` - Responses API
+**Run:**
+
+```bash
+npm run example:openai-metadata
+# or
+npx tsx examples/openai/metadata.ts
+```
+
+**What it does:**
+
+- Shows all available metadata fields
+- Demonstrates subscriber tracking
+- Includes organization and product tracking
+
+**Metadata fields supported:**
+
+- `traceId` - Session or conversation tracking identifier
+- `taskType` - Type of AI task being performed
+- `agent` - AI agent or bot identifier
+- `organizationId` - Organization identifier
+- `productId` - Product or service identifier
+- `subscriptionId` - Subscription tier identifier
+- `responseQualityScore` - Quality rating (0.0-1.0)
+- `subscriber` - Nested subscriber object with `id`, `email`, `credential` (with `name` and `value`)
+
+---
+
+### 4. OpenAI Streaming
+
+**File:** `openai/streaming.ts`
+
+Demonstrates streaming responses:
+
+- Real-time token streaming
+- Accumulating responses
+- Streaming metrics
+
+**Run:**
+
+```bash
+npm run example:openai-stream
+# or
+npx tsx examples/openai/streaming.ts
+```
+
+**What it does:**
+
+- Creates a streaming chat completion
+- Displays tokens as they arrive in real-time
+- Tracks streaming metrics
+- Sends metering data after stream completes
+
+---
+
+### 5. OpenAI Responses API (Basic)
+
+**File:** `openai/responses-basic.ts`
 
 Demonstrates OpenAI's Responses API:
 
-- **Simplified interface** - Uses `input` instead of `messages` parameter
-- **Stateful API** - Enhanced capabilities for agent-like applications
-- **Unified experience** - Combines chat completions and assistants features
+- Simplified interface with `input` parameter
+- Stateful API features
+- Automatic tracking
 
-**Key Features:**
+**Run:**
 
-- New Responses API patterns
-- Automatic tracking with new API
-- Metadata support
-- Backward compatibility notes
+```bash
+npm run example:openai-res-basic
+# or
+npx tsx examples/openai/responses-basic.ts
+```
 
-**Perfect for:** Applications using OpenAI's latest API features
+**What it does:**
 
-**See the file for complete code examples.**
+- Uses the new Responses API
+- Creates responses with metadata
+- Demonstrates simplified interface
 
-### `openai-responses-streaming.ts` - Responses API Streaming
+---
 
-Demonstrates streaming with the new Responses API:
+### 6. OpenAI Responses API (Embeddings)
 
-- **Streaming responses** - Real-time responses with new API
-- **Event handling** - Process response events as they arrive
-- **Usage tracking** - Automatic tracking for streaming responses
+**File:** `openai/responses-embed.ts`
 
-**Key Features:**
+Demonstrates embeddings with Responses API:
 
-- Responses API streaming patterns
-- Type-safe event processing
-- Automatic usage metrics
-- Stream completion tracking
+- Embeddings generation
+- Metadata tracking
+- Usage metrics
 
-**Perfect for:** Real-time applications using the new Responses API
+**Run:**
 
-**See the file for complete code examples.**
+```bash
+npm run example:openai-res-embed
+# or
+npx tsx examples/openai/responses-embed.ts
+```
 
-### Azure OpenAI Examples
+**What it does:**
 
-#### `azure-basic.ts` - Azure Chat Completions
+- Generates text embeddings
+- Tracks embedding usage
+- Demonstrates metadata with embeddings
 
-Demonstrates Azure OpenAI integration with automatic detection:
+---
 
-- **Azure configuration** - Environment-based Azure setup
-- **Chat completions** - Azure-hosted models with tracking
-- **Automatic detection** - Middleware detects Azure vs OpenAI automatically
+### 7. OpenAI Responses API (Streaming)
 
-**Key Features:**
+**File:** `openai/responses-streaming.ts`
 
-- Azure OpenAI deployment configuration
-- Model name resolution for Azure
-- Accurate Azure pricing
-- Metadata tracking with Azure
+Demonstrates streaming with Responses API:
 
-**Perfect for:** Enterprise applications using Azure OpenAI
+- Real-time streaming responses
+- Event handling
+- Streaming metrics
 
-**See the file for complete code examples.**
+**Run:**
 
-#### `azure-streaming.ts` - Azure Streaming
+```bash
+npm run example:openai-res-stream
+# or
+npx tsx examples/openai/responses-streaming.ts
+```
+
+**What it does:**
+
+- Creates streaming responses
+- Processes response events in real-time
+- Tracks streaming usage metrics
+
+---
+
+### 8. Azure OpenAI (Basic)
+
+**File:** `azure/basic.ts`
+
+Demonstrates Azure OpenAI integration:
+
+- Automatic Azure detection
+- Azure-specific configuration
+- Chat completions with Azure
+
+**Prerequisites:**
+
+To run this example with Azure OpenAI, you need to configure Azure credentials in `.env`:
+
+```bash
+AZURE_OPENAI_API_KEY=your_azure_key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_VERSION=your_azure_openai_api_version
+```
+
+**Run:**
+
+```bash
+npm run example:azure-basic
+# or
+npx tsx examples/azure/basic.ts
+```
+
+**What it does:**
+
+- Automatically detects Azure configuration
+- Uses Azure OpenAI for chat completions
+- Sends metering data with provider='AZURE_OPENAI'
+
+**Important for Azure:**
+
+When using Azure OpenAI, you must pass your **deployment name** (not the OpenAI model name) in the `model` parameter. The deployment name is what you configured in Azure Portal.
+
+---
+
+### 9. Azure OpenAI (Streaming)
+
+**File:** `azure/stream.ts`
 
 Demonstrates streaming with Azure OpenAI:
 
-- **Azure streaming** - Real-time responses from Azure-hosted models
-- **Deployment resolution** - Automatic Azure deployment name handling
-- **Usage tracking** - Azure-specific metrics and pricing
+- Real-time streaming from Azure
+- Azure deployment handling
+- Streaming metrics
 
-**Perfect for:** Real-time Azure OpenAI applications
+**Run:**
 
-**See the file for complete code examples.**
-
-#### `azure-responses-basic.ts` - Azure Responses API
-
-Demonstrates new Responses API with Azure OpenAI:
-
-- **Azure + Responses API** - Combine Azure hosting with new API
-- **Unified interface** - Same Responses API patterns on Azure
-- **Automatic tracking** - Azure-aware usage tracking
-
-**Perfect for:** Azure applications using latest OpenAI features
-
-**See the file for complete code examples.**
-
-#### `azure-responses-streaming.ts` - Azure Responses Streaming
-
-Demonstrates Responses API streaming with Azure OpenAI:
-
-- **Azure streaming** - Real-time Responses API on Azure
-- **Event handling** - Process Azure response events
-- **Complete tracking** - Azure metrics with new API
-
-**Perfect for:** Real-time Azure applications with Responses API
-
-**See the file for complete code examples.**
-
-## TypeScript Configuration
-
-Ensure your `tsconfig.json` includes:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "skipLibCheck": true
-  }
-}
+```bash
+npm run example:azure-stream
+# or
+npx tsx examples/azure/stream.ts
 ```
 
-## Requirements
+**What it does:**
 
-- **Node.js 16+** with TypeScript support
-- **TypeScript 4.5+** for module augmentation features
-- **Valid Revenium API key** (starts with `hak_`)
-- **Valid OpenAI API key** (starts with `sk-`) or Azure OpenAI credentials
-- **OpenAI SDK 5.0+** (5.8+ for Responses API)
+- Creates streaming chat completions with Azure
+- Displays tokens in real-time
+- Tracks Azure streaming metrics
 
-## Troubleshooting
+---
 
-### Module Augmentation Not Working
+### 10. Azure Responses API (Basic)
 
-**Problem:** TypeScript doesn't recognize `usageMetadata` in OpenAI SDK calls
+**File:** `azure/responses-basic.ts`
 
-**Solution:**
+Demonstrates Responses API with Azure OpenAI:
 
-```typescript
-// ❌ Wrong - missing module augmentation import
-import { initializeReveniumFromEnv } from "@revenium/openai";
+- Azure + Responses API
+- Simplified interface on Azure
+- Automatic tracking
 
-// ✅ Correct - import for module augmentation
-import { initializeReveniumFromEnv, patchOpenAIInstance } from "@revenium/openai";
-import OpenAI from "openai";
+**Run:**
+
+```bash
+npm run example:azure-res-basic
+# or
+npx tsx examples/azure/responses-basic.ts
 ```
 
-### Environment Variables Not Loading
+**What it does:**
 
-**Problem:** `REVENIUM_METERING_API_KEY` or `OPENAI_API_KEY` not found
+- Uses Responses API with Azure OpenAI
+- Creates responses with Azure deployment
+- Tracks Azure usage metrics
 
-**Solutions:**
+---
 
-- Ensure `.env` file is in project root
-- Check variable names match exactly
-- Verify you're importing `dotenv/config` before the middleware
-- Check API keys have correct prefixes (`hak_` for Revenium, `sk-` for OpenAI)
+### 11. Azure Responses API (Streaming)
 
-### TypeScript Compilation Errors
+**File:** `azure/responses-stream.ts`
 
-**Problem:** Module resolution or import errors
+Demonstrates Responses API streaming with Azure:
 
-**Solution:** Verify your `tsconfig.json` settings:
+- Real-time Responses API on Azure
+- Event handling
+- Azure streaming metrics
 
-```json
-{
-  "compilerOptions": {
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true
-  }
-}
+**Run:**
+
+```bash
+npm run example:azure-res-stream
+# or
+npx tsx examples/azure/responses-stream.ts
 ```
 
-### Azure Configuration Issues
+**What it does:**
 
-**Problem:** Azure OpenAI not working or incorrect pricing
+- Creates streaming responses with Azure
+- Processes response events in real-time
+- Tracks Azure streaming usage
 
-**Solutions:**
+---
 
-- Verify all Azure environment variables are set (`AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_DEPLOYMENT`)
-- Check deployment name matches your Azure resource
-- Ensure API version is compatible (`2024-12-01-preview` or later recommended)
-- Verify endpoint URL format: `https://your-resource-name.openai.azure.com/`
+## Common Issues
+
+### "Client not initialized" error
+
+**Solution:** Make sure to call `Initialize()` before using `GetClient()`.
+
+### "REVENIUM_METERING_API_KEY is required" error
+
+**Solution:** Set the `REVENIUM_METERING_API_KEY` environment variable in your `.env` file.
+
+### "invalid Revenium API key format" error
+
+**Solution:** Revenium API keys should start with `hak_`. Check your API key format.
+
+### Environment variables not loading
+
+**Solution:** Make sure your `.env` file is in the project root directory and contains the required variables.
+
+### Azure example not working
+
+**Solution:** Make sure you have set all required Azure environment variables in your `.env` file:
+
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_API_VERSION`
 
 ### Debug Mode
 
@@ -308,12 +386,18 @@ Enable detailed logging to troubleshoot issues:
 REVENIUM_DEBUG=true
 
 # Then run examples
-npx tsx examples/getting_started.ts
+npm run example:getting-started
 ```
 
-## Additional Resources
+## Next Steps
 
-- **Main Documentation**: See root [README.md](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/README.md)
-- **API Reference**: [Revenium Metadata Fields](https://revenium.readme.io/reference/meter_ai_completion)
-- **OpenAI Documentation**: [OpenAI API Reference](https://platform.openai.com/docs)
-- **Issues**: [Report bugs](https://github.com/revenium/revenium-middleware-openai-node/issues)
+- Check the [main README](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/README.md) for detailed documentation
+- Visit the [Revenium Dashboard](https://app.revenium.ai) to view your metering data
+- See [.env.example](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/.env.example) for all configuration options
+
+## Support
+
+For issues or questions:
+
+- Documentation: https://docs.revenium.io
+- Email: support@revenium.io

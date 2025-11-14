@@ -47,22 +47,30 @@ REVENIUM_DEBUG=true
 Create `test.mjs`:
 
 ```javascript
-import 'dotenv/config';
-import { initializeReveniumFromEnv, patchOpenAIInstance } from '@revenium/openai';
-import OpenAI from 'openai';
+import { Initialize, GetClient } from "@revenium/openai";
 
-const openai = patchOpenAIInstance(new OpenAI());
+// Initialize from environment variables
+Initialize();
 
-const response = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
-  messages: [{ role: 'user', content: 'Test message' }],
-  usageMetadata: {
-    subscriber: { id: 'test-user' },
-    organizationId: 'test-org'
-  }
-});
+// Get the client
+const client = GetClient();
 
-console.log('✅ Success:', response.usage);
+// Create a chat completion
+const response = await client
+  .chat()
+  .completions()
+  .create(
+    {
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: "Test message" }],
+    },
+    {
+      subscriber: { id: "test-user" },
+      organizationId: "test-org",
+    }
+  );
+
+console.log("Success:", response.usage);
 ```
 
 Run with debug logging:
@@ -72,48 +80,60 @@ REVENIUM_DEBUG=true node test.mjs
 ```
 
 **Expected output:**
+
 ```
-[Revenium Debug] Revenium middleware initialized from environment variables
-[Revenium Debug] OpenAI instance patched successfully
-[Revenium Debug] OpenAI chat.completions.create intercepted
-[Revenium Debug] Revenium tracking successful
-✅ Success: { prompt_tokens: 10, completion_tokens: 15, total_tokens: 25 }
+Success: { prompt_tokens: 10, completion_tokens: 15, total_tokens: 25 }
 ```
 
 ### 5. Test All Module Formats
 
 **CommonJS** (`test.cjs`):
+
 ```javascript
-require('dotenv/config');
-const { initializeReveniumFromEnv, patchOpenAIInstance } = require('@revenium/openai');
+const { Initialize, GetClient } = require("@revenium/openai");
+
+Initialize();
+const client = GetClient();
 // ... same code
 ```
 
 **ES Modules** (`test.mjs`):
+
 ```javascript
-import 'dotenv/config';
-import { initializeReveniumFromEnv, patchOpenAIInstance } from '@revenium/openai';
+import { Initialize, GetClient } from "@revenium/openai";
+
+Initialize();
+const client = GetClient();
 // ... same code
 ```
 
 **TypeScript** (`test.ts`):
+
 ```typescript
-import 'dotenv/config';
-import { initializeReveniumFromEnv, patchOpenAIInstance } from '@revenium/openai';
+import { Initialize, GetClient } from "@revenium/openai";
+
+Initialize();
+const client = GetClient();
 // ... same code, run with: npx tsx test.ts
 ```
 
 ### 6. Test Streaming
 
-Add `stream: true` to the request:
+Use `createStreaming()` method:
 
 ```javascript
-const stream = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
-  messages: [{ role: 'user', content: 'Count to 3' }],
-  stream: true,
-  usageMetadata: { subscriber: { id: 'test-user' } }
-});
+const stream = await client
+  .chat()
+  .completions()
+  .createStreaming(
+    {
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: "Count to 3" }],
+    },
+    {
+      subscriber: { id: "test-user" },
+    }
+  );
 
 for await (const chunk of stream) {
   if (chunk.choices[0]?.delta?.content) {
@@ -124,16 +144,18 @@ for await (const chunk of stream) {
 
 ## Complete Examples
 
-See the [examples/](./examples/) directory for complete working examples:
+See the [examples/](https://github.com/revenium/revenium-middleware-openai-node-internal/tree/HEAD/examples) directory for complete working examples:
 
 - `getting_started.ts` - Simple entry point
-- `openai-basic.ts` - Chat and embeddings
-- `openai-streaming.ts` - Streaming responses
-- `azure-basic.ts` - Azure OpenAI
+- `openai/basic.ts` - Chat and embeddings
+- `openai/streaming.ts` - Streaming responses
+- `azure/basic.ts` - Azure OpenAI
 
 Run any example:
+
 ```bash
 npx tsx node_modules/@revenium/openai/examples/getting_started.ts
+npx tsx node_modules/@revenium/openai/examples/openai/basic.ts
 ```
 
 ## Development Workflow

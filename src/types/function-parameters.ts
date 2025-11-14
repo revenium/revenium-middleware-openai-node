@@ -10,8 +10,8 @@
  * @since 1.0.0
  */
 
-import { UsageMetadata, ProviderInfo } from './index';
-import { OpenAIResponsesRequest } from './responses-api';
+import { UsageMetadata } from "./index";
+import { OpenAIResponsesRequest } from "./responses-api";
 
 /**
  * OpenAI API response structure for chat completions
@@ -19,27 +19,6 @@ import { OpenAIResponsesRequest } from './responses-api';
  * Represents the complete response structure returned by OpenAI's chat completions API.
  * Includes usage statistics, response choices, and metadata. Used internally for
  * processing responses and extracting usage metrics.
- *
- * @public
- * @example
- * ```typescript
- * const response: OpenAIChatResponse = {
- *   id: 'chatcmpl-123',
- *   model: 'gpt-4o-mini',
- *   usage: {
- *     prompt_tokens: 10,
- *     completion_tokens: 20,
- *     total_tokens: 30
- *   },
- *   choices: [{
- *     finish_reason: 'stop',
- *     message: {
- *       content: 'Hello! How can I help you?',
- *       role: 'assistant'
- *     }
- *   }]
- * };
- * ```
  */
 export interface OpenAIChatResponse {
   /** Unique identifier for the chat completion */

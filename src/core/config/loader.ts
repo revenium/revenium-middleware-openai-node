@@ -5,18 +5,49 @@
  * Separated from validation and management for single responsibility.
  */
 
-import { ReveniumConfig, AzureConfig } from '../../types/index.js';
+import { ReveniumConfig, AzureConfig } from "../../types";
+import { config as loadDotenv } from "dotenv";
+import { existsSync } from "fs";
+import { join } from "path";
+import { DEFAULT_REVENIUM_BASE_URL } from "../../utils/constants.js";
 
 /**
- * Default Revenium base URL for consistency with other middleware
+ * Flag to track if .env files have been loaded
  */
-const DEFAULT_REVENIUM_BASE_URL = 'https://api.revenium.ai';
+let envFilesLoaded = false;
+
+/**
+ * Load .env files automatically
+ * Tries to load .env.local and .env files from current and parent directories
+ */
+function loadEnvFiles(): void {
+  if (envFilesLoaded) return;
+
+  const envFiles = [".env.local", ".env"];
+  const cwd = process.cwd();
+  const searchDirs = [cwd, join(cwd, "..")];
+
+  for (const dir of searchDirs) {
+    for (const envFile of envFiles) {
+      const envPath = join(dir, envFile);
+      if (existsSync(envPath)) {
+        loadDotenv({ path: envPath });
+      }
+    }
+  }
+
+  envFilesLoaded = true;
+}
 
 /**
  * Load configuration from environment variables
+ * Automatically loads .env files first
  */
 export function loadConfigFromEnv(): ReveniumConfig | null {
-  const reveniumApiKey = process.env.REVENIUM_METERING_API_KEY || process.env.REVENIUM_API_KEY;
+  loadEnvFiles();
+
+  const reveniumApiKey =
+    process.env.REVENIUM_METERING_API_KEY || process.env.REVENIUM_API_KEY;
   const reveniumBaseUrl =
     process.env.REVENIUM_METERING_BASE_URL ||
     process.env.REVENIUM_BASE_URL ||
@@ -33,24 +64,21 @@ export function loadConfigFromEnv(): ReveniumConfig | null {
 
 /**
  * Load Azure configuration from environment variables
+ * Automatically loads .env files first
  */
 export function loadAzureConfigFromEnv(): AzureConfig | null {
+  loadEnvFiles();
+
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
-  const deployment = process.env.AZURE_OPENAI_DEPLOYMENT;
   const apiVersion = process.env.AZURE_OPENAI_API_VERSION;
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
-  const tenantId = process.env.AZURE_OPENAI_TENANT_ID;
-  const resourceGroup = process.env.AZURE_OPENAI_RESOURCE_GROUP;
 
   // Return null if no Azure config is present
-  if (!endpoint && !deployment && !apiKey) return null;
+  if (!endpoint && !apiKey) return null;
   return {
     endpoint,
-    deployment,
-    apiVersion: apiVersion || '2024-12-01-preview', // Default from Python learnings
+    apiVersion,
     apiKey,
-    tenantId,
-    resourceGroup,
   };
 }
 
@@ -59,8 +87,6 @@ export function loadAzureConfigFromEnv(): AzureConfig | null {
  */
 export function hasAzureConfigInEnv(): boolean {
   return !!(
-    process.env.AZURE_OPENAI_ENDPOINT ||
-    process.env.AZURE_OPENAI_DEPLOYMENT ||
-    process.env.AZURE_OPENAI_API_KEY
+    process.env.AZURE_OPENAI_ENDPOINT || process.env.AZURE_OPENAI_API_KEY
   );
 }

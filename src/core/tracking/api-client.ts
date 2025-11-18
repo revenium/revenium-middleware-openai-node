@@ -5,9 +5,10 @@
  * Extracted from tracking.ts for single responsibility.
  */
 
-import { ReveniumPayload } from '../../types/index.js';
-import { getConfig, getLogger } from '../config/index.js';
-import { buildReveniumUrl } from '../../utils/url-builder.js';
+import { ReveniumPayload } from "../../types";
+import { getConfig, getLogger } from "../config";
+import { buildReveniumUrl } from "../../utils/url-builder.js";
+import { DEFAULT_REVENIUM_BASE_URL } from "../../utils/constants";
 
 // Global logger
 const logger = getLogger();
@@ -22,15 +23,16 @@ const logger = getLogger();
  */
 export async function sendToRevenium(payload: ReveniumPayload): Promise<void> {
   const config = getConfig();
-  if (!config) return logger.warn('Revenium configuration not found, skipping tracking');
+  if (!config)
+    return logger.warn("Revenium configuration not found, skipping tracking");
 
   // Use the new URL builder utility instead of nested conditionals
   const url = buildReveniumUrl(
-    config.reveniumBaseUrl || 'https://api.revenium.ai',
-    '/ai/completions'
+    config.reveniumBaseUrl || DEFAULT_REVENIUM_BASE_URL,
+    "/ai/completions"
   );
 
-  logger.debug('Sending Revenium API request', {
+  logger.debug("Sending Revenium API request", {
     url,
     operationType: payload.operationType,
     transactionId: payload.transactionId,
@@ -39,16 +41,16 @@ export async function sendToRevenium(payload: ReveniumPayload): Promise<void> {
   });
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'x-api-key': config.reveniumApiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-api-key": config.reveniumApiKey,
     },
     body: JSON.stringify(payload),
   });
 
-  logger.debug('Revenium API response', {
+  logger.debug("Revenium API response", {
     status: response.status,
     statusText: response.statusText,
     transactionId: payload.transactionId,
@@ -57,7 +59,7 @@ export async function sendToRevenium(payload: ReveniumPayload): Promise<void> {
 
   if (!response.ok) {
     const responseText = await response.text();
-    logger.error('Revenium API error response', {
+    logger.error("Revenium API error response", {
       status: response.status,
       statusText: response.statusText,
       body: responseText,
@@ -70,7 +72,7 @@ export async function sendToRevenium(payload: ReveniumPayload): Promise<void> {
   }
 
   const responseBody = await response.text();
-  logger.debug('Revenium tracking successful', {
+  logger.debug("Revenium tracking successful", {
     transactionId: payload.transactionId,
     operationType: payload.operationType,
     response: responseBody,

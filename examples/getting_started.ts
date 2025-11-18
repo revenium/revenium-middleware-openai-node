@@ -1,54 +1,42 @@
-import 'dotenv/config';
-import { initializeReveniumFromEnv, patchOpenAIInstance } from '@revenium/openai';
-import OpenAI from 'openai';
+/**
+ * Getting Started Example
+ *
+ * This is the simplest way to get started with Revenium OpenAI middleware.
+ * Just initialize and start making requests!
+ * Note: .env files are loaded automatically by the middleware.
+ */
+
+import { Initialize, GetClient } from "@revenium/openai";
 
 async function main() {
-  const initResult = initializeReveniumFromEnv();
-  if (!initResult.success) {
-    console.error('Failed to initialize Revenium:', initResult.message);
-    process.exit(1);
-  }
+  // Initialize middleware
+  Initialize();
 
-  const openai = patchOpenAIInstance(new OpenAI());
+  // Get client
+  const client = GetClient();
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+  // Create metadata
+  const metadata = {
+    organizationId: "org-getting-started-demo",
+    productId: "prod-getting-started",
+  };
+
+  // Make request
+  const params = {
+    model: "gpt-4",
     messages: [
-      { role: 'system', content: 'You are a helpful assistant.' },
-      { role: 'user', content: 'Please verify you are ready to assist me.' }
-    ],
-
-    /* Optional metadata for advanced reporting, lineage tracking, and cost allocation
-    usageMetadata: {
-      // User identification
-      subscriber: {
-        id: 'user-123',
-        email: 'user@example.com',
-        credential: {
-          name: 'api-key-prod',
-          value: 'key-abc-123'
-        }
+      {
+        role: "user" as const,
+        content: "Hello! Introduce yourself in one sentence.",
       },
+    ],
+  };
 
-      // Organization & billing
-      organizationId: 'my-customers-name',
-      subscriptionId: 'plan-enterprise-2024',
+  const response = await client.chat().completions().create(params, metadata);
 
-      // Product & task tracking
-      productId: 'my-product',
-      taskType: 'doc-summary',
-      agent: 'customer-support',
-
-      // Session tracking
-      traceId: 'session-' + Date.now(),
-
-      // Quality metrics
-      responseQualityScore: 0.95  // 0.0-1.0 scale
-    }
-    */
-  });
-
-  console.log('Response:', response.choices[0]?.message?.content);
+  // Display response
+  console.log(response.choices[0].message.content);
+  console.log("\nUsage data sent to Revenium!");
 }
 
 main().catch(console.error);

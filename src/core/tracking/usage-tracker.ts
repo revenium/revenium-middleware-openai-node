@@ -5,18 +5,17 @@
  * Extracted from tracking.ts for better organization.
  */
 
-import { randomUUID } from 'crypto';
-import { UsageMetadata, ProviderInfo } from '../../types/index.js';
+import { UsageMetadata, ProviderInfo } from "../../types";
 import {
   OpenAIChatResponse,
   OpenAIEmbeddingResponse,
   OpenAIChatRequest,
   OpenAIEmbeddingRequest,
-} from '../../types/function-parameters.js';
-import { getLogger } from '../config/index.js';
-import { sendToRevenium } from './api-client.js';
-import { buildPayload } from './payload-builder.js';
-import { safeAsyncOperation } from '../../utils/error-handler.js';
+} from "../../types/function-parameters.js";
+import { getLogger } from "../config";
+import { sendToRevenium } from "./api-client.js";
+import { buildPayload } from "./payload-builder.js";
+import { safeAsyncOperation } from "../../utils/error-handler.js";
 
 // Global logger
 const logger = getLogger();
@@ -33,14 +32,21 @@ export async function sendReveniumMetrics(
 ): Promise<void> {
   await safeAsyncOperation(
     async () => {
-      const payload = buildPayload('CHAT', response, request, startTime, duration, providerInfo);
+      const payload = buildPayload(
+        "CHAT",
+        response,
+        request,
+        startTime,
+        duration,
+        providerInfo
+      );
       await sendToRevenium(payload);
     },
-    'Chat completion tracking',
+    "Chat completion tracking",
     {
       logError: true,
       rethrow: false, // Don't rethrow to maintain fire-and-forget behavior
-      messagePrefix: 'Chat completion tracking failed: ',
+      messagePrefix: "Chat completion tracking failed: ",
     },
     logger
   );
@@ -58,14 +64,21 @@ export async function sendReveniumEmbeddingsMetrics(
 ): Promise<void> {
   await safeAsyncOperation(
     async () => {
-      const payload = buildPayload('EMBED', response, request, startTime, duration, providerInfo);
+      const payload = buildPayload(
+        "EMBED",
+        response,
+        request,
+        startTime,
+        duration,
+        providerInfo
+      );
       await sendToRevenium(payload);
     },
-    'Embeddings tracking',
+    "Embeddings tracking",
     {
       logError: true,
       rethrow: false, // Don't rethrow to maintain fire-and-forget behavior
-      messagePrefix: 'Embeddings tracking failed: ',
+      messagePrefix: "Embeddings tracking failed: ",
     },
     logger
   );
@@ -96,8 +109,12 @@ export function trackUsageAsync(trackingData: {
       prompt_tokens: trackingData.promptTokens,
       completion_tokens: trackingData.completionTokens,
       total_tokens: trackingData.totalTokens,
-      ...(trackingData.reasoningTokens && { reasoning_tokens: trackingData.reasoningTokens }),
-      ...(trackingData.cachedTokens && { cached_tokens: trackingData.cachedTokens }),
+      ...(trackingData.reasoningTokens && {
+        reasoning_tokens: trackingData.reasoningTokens,
+      }),
+      ...(trackingData.cachedTokens && {
+        cached_tokens: trackingData.cachedTokens,
+      }),
     },
     choices: [
       {
@@ -123,15 +140,15 @@ export function trackUsageAsync(trackingData: {
     trackingData.providerInfo
   )
     .then(() => {
-      logger.debug('Usage tracking completed successfully', {
+      logger.debug("Usage tracking completed successfully", {
         requestId: trackingData.requestId,
         model: trackingData.model,
         totalTokens: trackingData.totalTokens,
         isStreamed: trackingData.isStreamed,
       });
     })
-    .catch(error => {
-      logger.warn('Usage tracking failed', {
+    .catch((error) => {
+      logger.warn("Usage tracking failed", {
         error: error instanceof Error ? error.message : String(error),
         requestId: trackingData.requestId,
         model: trackingData.model,
@@ -159,12 +176,12 @@ export function trackEmbeddingsUsageAsync(trackingData: {
       total_tokens: trackingData.totalTokens,
     },
     data: [], // Mock empty data array for type compliance
-    object: 'list',
+    object: "list",
   };
 
   const mockRequest: OpenAIEmbeddingRequest = {
     model: trackingData.model,
-    input: '', // Mock empty input for type compliance
+    input: "", // Mock empty input for type compliance
     usageMetadata: trackingData.usageMetadata,
   };
 
@@ -176,12 +193,12 @@ export function trackEmbeddingsUsageAsync(trackingData: {
     trackingData.providerInfo
   )
     .then(() => {
-      logger.debug('Embeddings tracking completed successfully', {
+      logger.debug("Embeddings tracking completed successfully", {
         transactionId: trackingData.transactionId,
       });
     })
-    .catch(error => {
-      logger.warn('Embeddings tracking failed', {
+    .catch((error) => {
+      logger.warn("Embeddings tracking failed", {
         error: error instanceof Error ? error.message : String(error),
         transactionId: trackingData.transactionId,
       });

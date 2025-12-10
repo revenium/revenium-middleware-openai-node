@@ -228,3 +228,101 @@ export interface ExtendedUsage {
   reasoning_tokens?: number;
   cached_tokens?: number;
 }
+
+export interface OpenAIImageRequest {
+  model: "dall-e-2" | "dall-e-3";
+  prompt: string;
+  n?: number;
+  size?: "256x256" | "512x512" | "1024x1024" | "1792x1024" | "1024x1792";
+  quality?: "standard" | "hd";
+  response_format?: "url" | "b64_json";
+  style?: "vivid" | "natural";
+  user?: string;
+  usageMetadata?: UsageMetadata;
+}
+
+export interface OpenAIImageResponse {
+  created: number;
+  data: Array<{
+    url?: string;
+    b64_json?: string;
+    revised_prompt?: string;
+  }>;
+}
+
+export interface OpenAIImageEditRequest {
+  image: unknown;
+  prompt: string;
+  mask?: unknown;
+  model?: "dall-e-2";
+  n?: number;
+  size?: "256x256" | "512x512" | "1024x1024";
+  response_format?: "url" | "b64_json";
+  user?: string;
+  usageMetadata?: UsageMetadata;
+}
+
+export interface OpenAIImageVariationRequest {
+  image: unknown;
+  model?: "dall-e-2";
+  n?: number;
+  size?: "256x256" | "512x512" | "1024x1024";
+  response_format?: "url" | "b64_json";
+  user?: string;
+  usageMetadata?: UsageMetadata;
+}
+
+export interface OpenAIAudioTranscriptionRequest {
+  file: unknown;
+  model: "whisper-1";
+  language?: string;
+  prompt?: string;
+  response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";
+  temperature?: number;
+  timestamp_granularities?: Array<"word" | "segment">;
+  usageMetadata?: UsageMetadata;
+}
+
+export interface OpenAIAudioTranscriptionResponse {
+  task?: "transcribe";
+  language?: string;
+  duration?: number;
+  text: string;
+  words?: Array<{
+    word: string;
+    start: number;
+    end: number;
+  }>;
+  segments?: Array<{
+    id: number;
+    seek: number;
+    start: number;
+    end: number;
+    text: string;
+    tokens: number[];
+    temperature: number;
+    avg_logprob: number;
+    compression_ratio: number;
+    no_speech_prob: number;
+  }>;
+}
+
+export interface OpenAIAudioTranslationRequest {
+  file: unknown;
+  model: "whisper-1";
+  prompt?: string;
+  response_format?: "json" | "text" | "srt" | "verbose_json" | "vtt";
+  temperature?: number;
+  usageMetadata?: UsageMetadata;
+}
+
+export type OpenAIAudioTranslationResponse = OpenAIAudioTranscriptionResponse;
+
+export interface OpenAIAudioSpeechRequest {
+  model: "tts-1" | "tts-1-hd";
+  input: string;
+  voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+  response_format?: "mp3" | "opus" | "aac" | "flac" | "wav" | "pcm";
+  speed?: number;
+  usageMetadata?: UsageMetadata;
+}

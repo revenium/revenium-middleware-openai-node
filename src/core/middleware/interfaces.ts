@@ -7,9 +7,14 @@
 
 import OpenAI from "openai";
 import { randomUUID } from "crypto";
-import { Config, Provider, UsageMetadata, ProviderInfo } from "../../types";
+import { Config, UsageMetadata, ProviderInfo } from "../../types";
 import { getLogger } from "../config";
-import { trackUsageAsync, trackEmbeddingsUsageAsync } from "../tracking";
+import {
+  trackUsageAsync,
+  trackEmbeddingsUsageAsync,
+  trackImageUsageAsync,
+  trackAudioUsageAsync,
+} from "../tracking";
 import {
   ResponsesCreateParams,
   ResponsesResponse,
@@ -458,5 +463,238 @@ export class ResponsesInterface {
 
       throw error;
     }
+  }
+}
+
+async function wrapApiCall<T, P extends { model?: string | null }>(
+  apiCall: () => Promise<T>,
+  trackingCall: (
+    response: T,
+    duration: number,
+    metadata?: UsageMetadata
+  ) => Promise<void>,
+  params: P,
+  errorMessage: string
+): Promise<T> {
+  const startTime = Date.now();
+  const { usageMetadata: metadata, ...cleanParams } = params as any;
+
+  try {
+    const response = await apiCall();
+    const duration = Date.now() - startTime;
+    await trackingCall(response, duration, metadata);
+    return response;
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logger.error(errorMessage, {
+      error: error instanceof Error ? error.message : String(error),
+      model: params.model,
+      duration,
+    });
+    throw error;
+  }
+}
+
+export class ImagesInterface {
+  private originalImages: OpenAI.Images;
+  private config: Config;
+  private providerInfo: ProviderInfo;
+
+  constructor(
+    originalImages: OpenAI.Images,
+    config: Config,
+    providerInfo: ProviderInfo
+  ) {
+    this.originalImages = originalImages;
+    this.config = config;
+    this.providerInfo = providerInfo;
+  }
+
+  async generate(params: OpenAI.ImageGenerateParams): Promise<any> {
+    const { usageMetadata: metadata, ...cleanParams } = params as any;
+    const startTime = Date.now();
+
+    return wrapApiCall(
+      () => this.originalImages.generate(cleanParams),
+      async (response, duration) => {
+        await trackImageUsageAsync(
+          "generation",
+          response,
+          params,
+          startTime,
+          duration,
+          this.config,
+          this.providerInfo,
+          metadata
+        );
+      },
+      params,
+      "Image generation failed"
+    );
+  }
+
+  async edit(params: OpenAI.ImageEditParams): Promise<any> {
+    const { usageMetadata: metadata, ...cleanParams } = params as any;
+    const startTime = Date.now();
+
+    return wrapApiCall(
+      () => this.originalImages.edit(cleanParams),
+      async (response, duration) => {
+        await trackImageUsageAsync(
+          "edit",
+          response,
+          params,
+          startTime,
+          duration,
+          this.config,
+          this.providerInfo,
+          metadata
+        );
+      },
+      params,
+      "Image edit failed"
+    );
+  }
+
+  async createVariation(
+    params: OpenAI.ImageCreateVariationParams
+  ): Promise<any> {
+    const { usageMetadata: metadata, ...cleanParams } = params as any;
+    const startTime = Date.now();
+
+    return wrapApiCall(
+      () => this.originalImages.createVariation(cleanParams),
+      async (response, duration) => {
+        await trackImageUsageAsync(
+          "variation",
+          response,
+          params,
+          startTime,
+          duration,
+          this.config,
+          this.providerInfo,
+          metadata
+        );
+      },
+      params,
+      "Image variation failed"
+    );
+  }
+}
+
+export class AudioTranscriptionsInterface {
+  private originalTranscriptions: OpenAI.Audio.Transcriptions;
+  private config: Config;
+  private providerInfo: ProviderInfo;
+
+  constructor(
+    originalTranscriptions: OpenAI.Audio.Transcriptions,
+    config: Config,
+    providerInfo: ProviderInfo
+  ) {
+    this.originalTranscriptions = originalTranscriptions;
+    this.config = config;
+    this.providerInfo = providerInfo;
+  }
+
+  async create(params: OpenAI.Audio.TranscriptionCreateParams): Promise<any> {
+    const { usageMetadata: metadata, ...cleanParams } = params as any;
+    const startTime = Date.now();
+
+    return wrapApiCall(
+      () => this.originalTranscriptions.create(cleanParams),
+      async (response, duration) => {
+        await trackAudioUsageAsync(
+          "transcription",
+          response,
+          params,
+          startTime,
+          duration,
+          this.config,
+          this.providerInfo,
+          metadata
+        );
+      },
+      params,
+      "Audio transcription failed"
+    );
+  }
+}
+
+export class AudioTranslationsInterface {
+  private originalTranslations: OpenAI.Audio.Translations;
+  private config: Config;
+  private providerInfo: ProviderInfo;
+
+  constructor(
+    originalTranslations: OpenAI.Audio.Translations,
+    config: Config,
+    providerInfo: ProviderInfo
+  ) {
+    this.originalTranslations = originalTranslations;
+    this.config = config;
+    this.providerInfo = providerInfo;
+  }
+
+  async create(params: OpenAI.Audio.TranslationCreateParams): Promise<any> {
+    const { usageMetadata: metadata, ...cleanParams } = params as any;
+    const startTime = Date.now();
+
+    return wrapApiCall(
+      () => this.originalTranslations.create(cleanParams),
+      async (response, duration) => {
+        await trackAudioUsageAsync(
+          "translation",
+          response,
+          params,
+          startTime,
+          duration,
+          this.config,
+          this.providerInfo,
+          metadata
+        );
+      },
+      params,
+      "Audio translation failed"
+    );
+  }
+}
+
+export class AudioSpeechInterface {
+  private originalSpeech: OpenAI.Audio.Speech;
+  private config: Config;
+  private providerInfo: ProviderInfo;
+
+  constructor(
+    originalSpeech: OpenAI.Audio.Speech,
+    config: Config,
+    providerInfo: ProviderInfo
+  ) {
+    this.originalSpeech = originalSpeech;
+    this.config = config;
+    this.providerInfo = providerInfo;
+  }
+
+  async create(params: OpenAI.Audio.SpeechCreateParams): Promise<any> {
+    const { usageMetadata: metadata, ...cleanParams } = params as any;
+    const startTime = Date.now();
+
+    return wrapApiCall(
+      () => this.originalSpeech.create(cleanParams),
+      async (response, duration) => {
+        await trackAudioUsageAsync(
+          "speech_synthesis",
+          response,
+          params,
+          startTime,
+          duration,
+          this.config,
+          this.providerInfo,
+          metadata
+        );
+      },
+      params,
+      "Audio speech synthesis failed"
+    );
   }
 }

@@ -11,6 +11,10 @@ import {
   ChatInterface,
   EmbeddingsInterface,
   ResponsesInterface,
+  ImagesInterface,
+  AudioTranscriptionsInterface,
+  AudioTranslationsInterface,
+  AudioSpeechInterface,
 } from "./interfaces.js";
 
 const logger = getLogger();
@@ -96,6 +100,34 @@ export class ReveniumOpenAI {
    */
   responses(): ResponsesInterface {
     return new ResponsesInterface(this.client, this.config, this.providerInfo);
+  }
+
+  images(): ImagesInterface {
+    return new ImagesInterface(
+      this.client.images,
+      this.config,
+      this.providerInfo
+    );
+  }
+
+  audio() {
+    return {
+      transcriptions: new AudioTranscriptionsInterface(
+        this.client.audio.transcriptions,
+        this.config,
+        this.providerInfo
+      ),
+      translations: new AudioTranslationsInterface(
+        this.client.audio.translations,
+        this.config,
+        this.providerInfo
+      ),
+      speech: new AudioSpeechInterface(
+        this.client.audio.speech,
+        this.config,
+        this.providerInfo
+      ),
+    };
   }
 
   /**

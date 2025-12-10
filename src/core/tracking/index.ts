@@ -6,16 +6,22 @@
  */
 
 // Re-export all tracking functionality
-export { sendToRevenium } from './api-client.js';
+export { sendToRevenium } from "./api-client.js";
 
-export { buildPayload } from './payload-builder.js';
+export {
+  buildPayload,
+  buildImagePayload,
+  buildAudioPayload,
+} from "./payload-builder.js";
 
 export {
   sendReveniumMetrics,
   sendReveniumEmbeddingsMetrics,
   trackUsageAsync,
   trackEmbeddingsUsageAsync,
-} from './usage-tracker.js';
+  trackImageUsageAsync,
+  trackAudioUsageAsync,
+} from "./usage-tracker.js";
 
 // Export utility functions
-export { mapStopReason } from '../../utils/stop-reason-mapper.js';
+export { mapStopReason } from "../../utils/stop-reason-mapper.js";

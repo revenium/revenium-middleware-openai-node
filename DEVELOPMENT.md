@@ -2,6 +2,28 @@
 
 This guide is for developers working on the `@revenium/openai` package itself.
 
+## Testing
+
+| Command                    | Description                        |
+| -------------------------- | ---------------------------------- |
+| `npm test`                 | Run all Jest tests                 |
+| `npm run test:unit`        | Run unit tests only                |
+| `npm run test:integration` | Run integration tests              |
+| `npm run test:performance` | Run performance tests              |
+| `npm run test:watch`       | Run tests in watch mode            |
+| `npm run test:coverage`    | Run tests with coverage report     |
+| `npm run test:e2e`         | Run E2E tests with real OpenAI API |
+
+**Note:** Integration and E2E tests require real API keys. Create a `.env` file with:
+
+```bash
+OPENAI_API_KEY=sk_your_openai_key
+REVENIUM_API_KEY=hak_your_api_key
+REVENIUM_METERING_BASE_URL=https://api.revenium.io
+```
+
+Tests will be skipped if API keys are not provided.
+
 ## Testing Pre-Release Versions
 
 ### 1. Build and Package

@@ -204,3 +204,97 @@ export function trackEmbeddingsUsageAsync(trackingData: {
       });
     });
 }
+
+export async function trackImageUsageAsync(
+  operationSubtype: "generation" | "edit" | "variation",
+  response: any,
+  request: any,
+  startTime: number,
+  duration: number,
+  config: any,
+  providerInfo: ProviderInfo,
+  metadata?: UsageMetadata
+): Promise<void> {
+  const trackingData = {
+    transactionId: `image-${operationSubtype}-${Date.now()}`,
+    operationSubtype,
+    model: request.model || "dall-e-2",
+    startTime,
+    duration,
+  };
+
+  logger.debug("Starting image tracking", trackingData);
+
+  Promise.resolve()
+    .then(async () => {
+      const { buildImagePayload } = await import("./payload-builder.js");
+      const payload = buildImagePayload(
+        operationSubtype,
+        response,
+        request,
+        startTime,
+        duration,
+        providerInfo,
+        metadata
+      );
+      await sendToRevenium(payload);
+    })
+    .then(() => {
+      logger.debug("Image tracking completed successfully", {
+        transactionId: trackingData.transactionId,
+      });
+    })
+    .catch((error) => {
+      logger.warn("Image tracking failed", {
+        error: error instanceof Error ? error.message : String(error),
+        transactionId: trackingData.transactionId,
+      });
+    });
+}
+
+export async function trackAudioUsageAsync(
+  operationSubtype: "transcription" | "translation" | "speech_synthesis",
+  response: any,
+  request: any,
+  startTime: number,
+  duration: number,
+  config: any,
+  providerInfo: ProviderInfo,
+  metadata?: UsageMetadata
+): Promise<void> {
+  const trackingData = {
+    transactionId: `audio-${operationSubtype}-${Date.now()}`,
+    operationSubtype,
+    model: request.model || "whisper-1",
+    startTime,
+    duration,
+  };
+
+  logger.debug("Starting audio tracking", trackingData);
+
+  Promise.resolve()
+    .then(async () => {
+      const { buildAudioPayload } = await import("./payload-builder.js");
+      const payload = buildAudioPayload(
+        operationSubtype,
+        response,
+        request,
+        startTime,
+        duration,
+        providerInfo,
+        metadata
+      );
+      await sendToRevenium(payload);
+    })
+    .then(() => {
+      logger.debug("Audio tracking completed successfully", {
+        transactionId: trackingData.transactionId,
+      });
+    })
+    .catch((error) => {
+      logger.warn("Audio tracking failed", {
+        error: error instanceof Error ? error.message : String(error),
+        transactionId: trackingData.transactionId,
+      });
+    });
+}

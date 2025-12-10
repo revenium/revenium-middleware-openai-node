@@ -92,12 +92,21 @@ export {
   EmbeddingsInterface,
   ResponsesInterface,
   StreamingWrapper,
+  ImagesInterface,
+  AudioTranscriptionsInterface,
+  AudioTranslationsInterface,
+  AudioSpeechInterface,
 } from "./core/middleware";
 
 /**
  * Tracking functions (for advanced use cases)
  */
-export { trackUsageAsync, trackEmbeddingsUsageAsync } from "./core/tracking";
+export {
+  trackUsageAsync,
+  trackEmbeddingsUsageAsync,
+  trackImageUsageAsync,
+  trackAudioUsageAsync,
+} from "./core/tracking";
 
 /**
  * Provider detection functions

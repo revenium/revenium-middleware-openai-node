@@ -26,10 +26,16 @@ export async function sendToRevenium(payload: ReveniumPayload): Promise<void> {
   if (!config)
     return logger.warn("Revenium configuration not found, skipping tracking");
 
-  // Use the new URL builder utility instead of nested conditionals
+  let endpoint = "/ai/completions";
+  if (payload.operationType === "IMAGE") {
+    endpoint = "/ai/images";
+  } else if (payload.operationType === "AUDIO") {
+    endpoint = "/ai/audio";
+  }
+
   const url = buildReveniumUrl(
     config.reveniumBaseUrl || DEFAULT_REVENIUM_BASE_URL,
-    "/ai/completions"
+    endpoint
   );
 
   logger.debug("Sending Revenium API request", {

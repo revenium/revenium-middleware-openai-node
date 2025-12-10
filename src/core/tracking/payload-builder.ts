@@ -124,3 +124,157 @@ export function buildPayload(
     timeToFirstToken: undefined,
   };
 }
+
+export function buildImagePayload(
+  operationSubtype: "generation" | "edit" | "variation",
+  response: any,
+  request: any,
+  startTime: number,
+  duration: number,
+  providerInfo?: ProviderInfo,
+  usageMetadata?: any
+): ReveniumPayload {
+  const now = new Date().toISOString();
+  const requestTime = new Date(startTime).toISOString();
+
+  const providerMetadata = providerInfo
+    ? getProviderMetadata(providerInfo)
+    : { provider: "OpenAI", modelSource: "OPENAI" };
+
+  const metadataFields = buildMetadataFields(usageMetadata);
+
+  const attributes: any = {
+    billing_unit: "per_image",
+    operationSubtype,
+    actual_image_count: response.data?.length || 0,
+  };
+
+  if (operationSubtype === "generation") {
+    attributes.requested_image_count = request.n || 1;
+    attributes.resolution = request.size || "1024x1024";
+    attributes.quality = request.quality;
+    attributes.style = request.style;
+    attributes.response_format = request.response_format || "url";
+    attributes.revised_prompt_provided =
+      response.data?.[0]?.revised_prompt !== undefined;
+  } else if (operationSubtype === "edit") {
+    attributes.requested_image_count = request.n || 1;
+    attributes.resolution = request.size || "1024x1024";
+    attributes.response_format = request.response_format || "url";
+    attributes.has_mask = request.mask !== undefined;
+  } else if (operationSubtype === "variation") {
+    attributes.requested_image_count = request.n || 1;
+    attributes.resolution = request.size || "1024x1024";
+    attributes.response_format = request.response_format || "url";
+  }
+
+  return {
+    transactionId: `image-${operationSubtype}-${randomUUID()}`,
+    operationType: "IMAGE",
+    costType: "AI",
+    model: request.model || "dall-e-2",
+    provider: providerMetadata.provider,
+    modelSource: providerMetadata.modelSource,
+    middlewareSource: "revenium-openai-node",
+    requestTime,
+    responseTime: now,
+    requestDuration: duration,
+    completionStartTime: now,
+    inputTokenCount: null,
+    outputTokenCount: null,
+    totalTokenCount: null,
+    reasoningTokenCount: undefined,
+    cacheCreationTokenCount: undefined,
+    cacheReadTokenCount: undefined,
+    stopReason: "END",
+    isStreamed: false,
+    timeToFirstToken: undefined,
+    inputTokenCost: undefined,
+    outputTokenCost: undefined,
+    totalCost: undefined,
+    ...metadataFields,
+    requestedImageCount: request.n || 1,
+    actualImageCount: response.data?.length || 0,
+    attributes,
+  };
+}
+
+export function buildAudioPayload(
+  operationSubtype: "transcription" | "translation" | "speech_synthesis",
+  response: any,
+  request: any,
+  startTime: number,
+  duration: number,
+  providerInfo?: ProviderInfo,
+  usageMetadata?: any
+): ReveniumPayload {
+  const now = new Date().toISOString();
+  const requestTime = new Date(startTime).toISOString();
+
+  const providerMetadata = providerInfo
+    ? getProviderMetadata(providerInfo)
+    : { provider: "OpenAI", modelSource: "OPENAI" };
+
+  const metadataFields = buildMetadataFields(usageMetadata);
+
+  const attributes: any = {
+    operationSubtype,
+  };
+
+  let durationSeconds: number | undefined;
+  let characterCount: number | undefined;
+
+  if (operationSubtype === "speech_synthesis") {
+    attributes.billing_unit = "per_character";
+    attributes.requested_character_count = request.input?.length || 0;
+    attributes.voice = request.voice;
+    attributes.speed = request.speed;
+    attributes.response_format = request.response_format || "mp3";
+    characterCount = request.input?.length || 0;
+  } else {
+    attributes.billing_unit = "per_minute";
+    attributes.actual_duration_seconds = response.duration || 0;
+    attributes.language = request.language || response.language;
+    attributes.response_format = request.response_format || "json";
+    attributes.temperature = request.temperature;
+    durationSeconds = response.duration || 0;
+
+    if (operationSubtype === "translation") {
+      attributes.target_language = "en";
+    }
+
+    if (request.timestamp_granularities) {
+      attributes.timestamp_granularities = request.timestamp_granularities;
+    }
+  }
+
+  return {
+    transactionId: `audio-${operationSubtype}-${randomUUID()}`,
+    operationType: "AUDIO",
+    costType: "AI",
+    model: request.model || "whisper-1",
+    provider: providerMetadata.provider,
+    modelSource: providerMetadata.modelSource,
+    middlewareSource: "revenium-openai-node",
+    requestTime,
+    responseTime: now,
+    requestDuration: duration,
+    completionStartTime: now,
+    inputTokenCount: null,
+    outputTokenCount: null,
+    totalTokenCount: null,
+    reasoningTokenCount: undefined,
+    cacheCreationTokenCount: undefined,
+    cacheReadTokenCount: undefined,
+    stopReason: "END",
+    isStreamed: false,
+    timeToFirstToken: undefined,
+    inputTokenCost: undefined,
+    outputTokenCost: undefined,
+    totalCost: undefined,
+    ...metadataFields,
+    durationSeconds,
+    characterCount,
+    attributes,
+  };
+}

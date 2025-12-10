@@ -171,7 +171,6 @@ export interface Logger {
  * Revenium API payload structure
  */
 export interface ReveniumPayload {
-  // Core identification
   transactionId: string;
   operationType:
     | "CHAT"
@@ -180,6 +179,8 @@ export interface ReveniumPayload {
     | "CLASSIFY"
     | "SUMMARIZE"
     | "TRANSLATE"
+    | "IMAGE"
+    | "AUDIO"
     | "OTHER";
   costType: "AI";
 
@@ -195,15 +196,12 @@ export interface ReveniumPayload {
   requestDuration: number;
   completionStartTime: string;
 
-  // Token counts
-  inputTokenCount: number;
-  outputTokenCount: number;
-  totalTokenCount: number;
-  // API Spec: https://revenium.readme.io/reference/meter_ai_completion
-  // "Leave null for models without reasoning capabilities" - NOT in required fields
+  inputTokenCount: number | null;
+  outputTokenCount: number | null;
+  totalTokenCount: number | null;
   reasoningTokenCount: number | undefined;
-  cacheCreationTokenCount: number | undefined; // Undefined when provider doesn't report
-  cacheReadTokenCount: number | undefined; // Undefined when provider doesn't report
+  cacheCreationTokenCount: number | undefined;
+  cacheReadTokenCount: number | undefined;
 
   // Chat-specific fields
   stopReason: string;
@@ -215,7 +213,6 @@ export interface ReveniumPayload {
   outputTokenCost?: number;
   totalCost?: number;
 
-  // Metadata fields (optional)
   traceId?: string;
   taskType?: string;
   agent?: string;
@@ -224,4 +221,51 @@ export interface ReveniumPayload {
   subscriber?: Subscriber;
   subscriptionId?: string;
   responseQualityScore?: number;
+
+  requestedImageCount?: number;
+  actualImageCount?: number;
+  durationSeconds?: number;
+  characterCount?: number;
+  inputAudioTokenCount?: number;
+  outputAudioTokenCount?: number;
+
+  attributes?: Record<string, unknown>;
 }
+
+export interface ImageAttributes {
+  billing_unit: "per_image";
+  requested_image_count?: number;
+  actual_image_count: number;
+  resolution: string;
+  quality?: "standard" | "hd";
+  operationSubtype: "generation" | "edit" | "variation";
+  response_format?: "url" | "b64_json";
+  style?: "vivid" | "natural";
+  revised_prompt_provided?: boolean;
+  has_mask?: boolean;
+}
+
+export interface AudioTranscriptionAttributes {
+  billing_unit: "per_minute";
+  actual_duration_seconds: number;
+  operationSubtype: "transcription" | "translation";
+  language?: string;
+  target_language?: string;
+  response_format?: string;
+  temperature?: number;
+  timestamp_granularities?: string[];
+}
+
+export interface AudioSpeechAttributes {
+  billing_unit: "per_character";
+  requested_character_count: number;
+  operationSubtype: "speech_synthesis";
+  voice: string;
+  speed?: number;
+  response_format?: string;
+  audio_size_bytes?: number;
+}
+
+export type AudioAttributes =
+  | AudioTranscriptionAttributes
+  | AudioSpeechAttributes;

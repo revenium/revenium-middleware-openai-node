@@ -106,6 +106,38 @@ The middleware provides a Go-aligned API with the following main functions:
 
 **For complete API documentation and usage examples, see [`examples/README.md`](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/examples/README.md).**
 
+## Trace Visualization Fields
+
+The middleware automatically captures trace visualization fields for distributed tracing and analytics:
+
+| Field                 | Type   | Description                                                                     | Environment Variable               |
+| --------------------- | ------ | ------------------------------------------------------------------------------- | ---------------------------------- |
+| `environment`         | string | Deployment environment (production, staging, development)                       | `REVENIUM_ENVIRONMENT`, `NODE_ENV` |
+| `operationType`       | string | Operation classification (CHAT, EMBED, IMAGE, AUDIO) - automatically detected   | N/A (auto-detected)                |
+| `operationSubtype`    | string | Additional detail (function_call, etc.) - automatically detected                | N/A (auto-detected)                |
+| `retryNumber`         | number | Retry attempt number (0 for first attempt, 1+ for retries)                      | `REVENIUM_RETRY_NUMBER`            |
+| `parentTransactionId` | string | Parent transaction reference for distributed tracing                            | `REVENIUM_PARENT_TRANSACTION_ID`   |
+| `transactionName`     | string | Human-friendly operation label                                                  | `REVENIUM_TRANSACTION_NAME`        |
+| `region`              | string | Cloud region (us-east-1, etc.) - auto-detected from AWS/Azure/GCP               | `AWS_REGION`, `REVENIUM_REGION`    |
+| `credentialAlias`     | string | Human-readable credential name                                                  | `REVENIUM_CREDENTIAL_ALIAS`        |
+| `traceType`           | string | Categorical identifier (alphanumeric, hyphens, underscores only, max 128 chars) | `REVENIUM_TRACE_TYPE`              |
+| `traceName`           | string | Human-readable label for trace instances (max 256 chars)                        | `REVENIUM_TRACE_NAME`              |
+
+**All trace visualization fields are optional.** The middleware will automatically detect and populate these fields when possible.
+
+### Example Configuration
+
+```env
+REVENIUM_ENVIRONMENT=production
+REVENIUM_REGION=us-east-1
+REVENIUM_CREDENTIAL_ALIAS=OpenAI Production Key
+REVENIUM_TRACE_TYPE=customer_support
+REVENIUM_TRACE_NAME=Support Ticket #12345
+REVENIUM_PARENT_TRANSACTION_ID=parent-txn-123
+REVENIUM_TRANSACTION_NAME=Answer Customer Question
+REVENIUM_RETRY_NUMBER=0
+```
+
 ## Metadata Fields
 
 The middleware supports the following optional metadata fields for tracking:

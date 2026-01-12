@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.16] - 2026-01-12
+
+### Added
+
+- **Trace Visualization Fields**: Full implementation of trace fields in payload builder
+  - `environment` - Deployment environment with fallback chain (REVENIUM_ENVIRONMENT → NODE_ENV → DEPLOYMENT_ENV)
+  - `region` - Cloud region with auto-detection from AWS/Azure/GCP and metadata service fallback
+  - `credentialAlias` - Human-readable credential name
+  - `traceType` - Categorical identifier with format validation (alphanumeric, hyphens, underscores, max 128 chars)
+  - `traceName` - Human-readable trace label with length validation (max 256 chars)
+  - `parentTransactionId` - Parent transaction reference for distributed tracing
+  - `transactionName` - Human-friendly operation label
+  - `retryNumber` - Retry attempt tracking (0 for first attempt, 1+ for retries)
+  - `operationSubtype` - Auto-detected operation details (e.g., function_call when tools are present)
+
+### Changed
+
+- Updated `buildPayload()` function to async to support region detection
+- Enhanced README with comprehensive trace visualization fields documentation
+- Added trace fields to TypeScript interface `ReveniumPayload`
+
+### Documentation
+
+- Added "Trace Visualization Fields" section to README with complete field descriptions
+- Added example configuration for trace fields
+- Updated documentation to match other middleware packages (anthropic-node, perplexity-node)
+
 ## [1.0.15] - 2025-12-09
 
 ### Added

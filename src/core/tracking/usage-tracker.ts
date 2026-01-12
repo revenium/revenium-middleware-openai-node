@@ -32,7 +32,7 @@ export async function sendReveniumMetrics(
 ): Promise<void> {
   await safeAsyncOperation(
     async () => {
-      const payload = buildPayload(
+      const payload = await buildPayload(
         "CHAT",
         response,
         request,
@@ -64,7 +64,7 @@ export async function sendReveniumEmbeddingsMetrics(
 ): Promise<void> {
   await safeAsyncOperation(
     async () => {
-      const payload = buildPayload(
+      const payload = await buildPayload(
         "EMBED",
         response,
         request,

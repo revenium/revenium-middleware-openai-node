@@ -17,6 +17,17 @@ import { getLogger } from "../config";
 import { mapStopReason } from "../../utils/stop-reason-mapper.js";
 import { buildMetadataFields } from "../../utils/metadata-builder.js";
 import { getProviderMetadata } from "../providers";
+import {
+  getEnvironment,
+  getRegion,
+  getCredentialAlias,
+  getTraceType,
+  getTraceName,
+  getParentTransactionId,
+  getTransactionName,
+  getRetryNumber,
+  detectOperationSubtype,
+} from "../../utils/trace-fields.js";
 
 // Global logger
 const logger = getLogger();
@@ -35,14 +46,14 @@ const logger = getLogger();
  * @param providerInfo - Provider information for Azure support
  * @returns Constructed payload for Revenium API
  */
-export function buildPayload(
+export async function buildPayload(
   operationType: "CHAT" | "EMBED",
   response: OpenAIChatResponse | OpenAIEmbeddingResponse,
   request: OpenAIChatRequest | OpenAIEmbeddingRequest,
   startTime: number,
   duration: number,
   providerInfo?: ProviderInfo
-): ReveniumPayload {
+): Promise<ReveniumPayload> {
   const now = new Date().toISOString();
   const requestTime = new Date(startTime).toISOString();
   const usage = response.usage;
@@ -58,6 +69,17 @@ export function buildPayload(
 
   // Build metadata fields using utility (eliminates repetitive spreading)
   const metadataFields = buildMetadataFields(request.usageMetadata);
+
+  // Get trace fields
+  const environment = getEnvironment();
+  const region = await getRegion();
+  const credentialAlias = getCredentialAlias();
+  const traceType = getTraceType();
+  const traceName = getTraceName();
+  const parentTransactionId = getParentTransactionId();
+  const transactionName = getTransactionName();
+  const retryNumber = getRetryNumber();
+  const operationSubtype = detectOperationSubtype(request);
 
   // Common fields for all operations
   const commonPayload = {
@@ -76,6 +98,17 @@ export function buildPayload(
 
     // Metadata fields (processed by utility)
     ...metadataFields,
+
+    // Trace fields
+    environment: environment || undefined,
+    region: region || undefined,
+    credentialAlias: credentialAlias || undefined,
+    traceType: traceType || undefined,
+    traceName: traceName || undefined,
+    parentTransactionId: parentTransactionId || undefined,
+    transactionName: transactionName || undefined,
+    retryNumber: retryNumber !== undefined ? retryNumber : undefined,
+    operationSubtype: operationSubtype || undefined,
 
     // Fixed middleware source identifier (spec format: revenium-{provider}-{language})
     middlewareSource: "revenium-openai-node",

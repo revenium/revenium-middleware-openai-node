@@ -230,6 +230,16 @@ export interface ReveniumPayload {
   outputAudioTokenCount?: number;
 
   attributes?: Record<string, unknown>;
+
+  environment?: string;
+  operationSubtype?: string;
+  retryNumber?: number;
+  parentTransactionId?: string;
+  transactionName?: string;
+  region?: string;
+  credentialAlias?: string;
+  traceType?: string;
+  traceName?: string;
 }
 
 export interface ImageAttributes {

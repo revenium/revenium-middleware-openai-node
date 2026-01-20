@@ -160,6 +160,44 @@ The middleware supports the following optional metadata fields for tracking:
 - [`examples/README.md`](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/examples/README.md) - All usage examples
 - [Revenium API Reference](https://revenium.readme.io/reference/meter_ai_completion) - Complete API documentation
 
+## Prompt Capture
+
+The middleware can capture prompts and responses for analysis. This feature is **disabled by default** for privacy and performance.
+
+### Configuration
+
+Enable prompt capture globally via environment variable:
+
+```bash
+REVENIUM_CAPTURE_PROMPTS=true
+REVENIUM_MAX_PROMPT_SIZE=50000  # Optional: default is 50000 characters
+```
+
+Or enable per-request via metadata:
+
+```typescript
+const response = await client.chat.completions.create(
+  {
+    model: "gpt-4",
+    messages: [{ role: "user", content: "Hello!" }],
+  },
+  {
+    usageMetadata: { capturePrompts: true },
+  },
+);
+```
+
+### Security
+
+Captured prompts are automatically sanitized to remove sensitive credentials:
+
+- API keys (OpenAI, Anthropic, Perplexity)
+- Bearer tokens
+- Passwords
+- Generic tokens and secrets
+
+Prompts exceeding `maxPromptSize` are truncated and marked with `promptsTruncated: true`.
+
 ## Configuration Options
 
 ### Environment Variables

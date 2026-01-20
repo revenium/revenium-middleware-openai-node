@@ -247,6 +247,10 @@ export interface ReveniumPayload {
   credentialAlias?: string;
   traceType?: string;
   traceName?: string;
+  systemPrompt?: string;
+  inputMessages?: string;
+  outputResponse?: string;
+  promptsTruncated?: boolean;
 }
 
 export interface ImageAttributes {

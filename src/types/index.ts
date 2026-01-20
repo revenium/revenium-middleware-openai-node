@@ -67,6 +67,9 @@ export interface UsageMetadata {
 
   /** Agent or model variant identifier for A/B testing and performance tracking */
   agent?: string;
+
+  /** Per-call override for prompt capture (overrides environment variable and config) */
+  capturePrompts?: boolean;
 }
 
 /**
@@ -138,6 +141,10 @@ export interface ReveniumConfig {
   azure?: AzureConfig;
   /** OpenAI API key (optional, can be set via environment variable) */
   openaiApiKey?: string;
+  /** Whether to capture and send prompts to Revenium API (default: false) */
+  capturePrompts?: boolean;
+  /** Maximum size in characters for captured prompts before truncation (default: 50000). Note: uses JavaScript string length (UTF-16 code units), not byte count. */
+  maxPromptSize?: number;
 }
 
 /**
@@ -163,7 +170,7 @@ export interface Logger {
   /** Log error-level messages with optional metadata */
   error(
     message: string,
-    meta?: Record<string, unknown> | string | unknown
+    meta?: Record<string, unknown> | string | unknown,
   ): void;
 }
 

@@ -28,6 +28,7 @@ import {
   getRetryNumber,
   detectOperationSubtype,
 } from "../../utils/trace-fields.js";
+import { extractPrompts } from "../../utils/prompt-extraction.js";
 
 // Global logger
 const logger = getLogger();
@@ -52,7 +53,7 @@ export async function buildPayload(
   request: OpenAIChatRequest | OpenAIEmbeddingRequest,
   startTime: number,
   duration: number,
-  providerInfo?: ProviderInfo
+  providerInfo?: ProviderInfo,
 ): Promise<ReveniumPayload> {
   const now = new Date().toISOString();
   const requestTime = new Date(startTime).toISOString();
@@ -138,7 +139,14 @@ export async function buildPayload(
     };
   }
   const chatResponse = response as OpenAIChatResponse;
+  const chatRequest = request as OpenAIChatRequest;
   const chatUsage = chatResponse.usage;
+
+  const promptData = extractPrompts(
+    chatRequest,
+    chatResponse,
+    chatRequest.usageMetadata,
+  );
 
   return {
     ...commonPayload,
@@ -152,9 +160,15 @@ export async function buildPayload(
     // Only include if provider reports cache hits
     cacheReadTokenCount: chatUsage.cached_tokens ?? undefined,
     stopReason: mapStopReason(chatResponse.choices?.[0]?.finish_reason, logger),
-    isStreamed: Boolean((request as OpenAIChatRequest).stream),
+    isStreamed: Boolean(chatRequest.stream),
     // TODO: Implement real TTFB tracking for streaming requests
     timeToFirstToken: undefined,
+    ...(promptData && {
+      systemPrompt: promptData.systemPrompt,
+      inputMessages: promptData.inputMessages,
+      outputResponse: promptData.outputResponse,
+      promptsTruncated: promptData.promptsTruncated,
+    }),
   };
 }
 
@@ -165,7 +179,7 @@ export function buildImagePayload(
   startTime: number,
   duration: number,
   providerInfo?: ProviderInfo,
-  usageMetadata?: any
+  usageMetadata?: any,
 ): ReveniumPayload {
   const now = new Date().toISOString();
   const requestTime = new Date(startTime).toISOString();
@@ -239,7 +253,7 @@ export function buildAudioPayload(
   startTime: number,
   duration: number,
   providerInfo?: ProviderInfo,
-  usageMetadata?: any
+  usageMetadata?: any,
 ): ReveniumPayload {
   const now = new Date().toISOString();
   const requestTime = new Date(startTime).toISOString();

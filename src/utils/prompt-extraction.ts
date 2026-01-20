@@ -73,17 +73,18 @@ interface MessageWithTools {
 /**
  * Sanitizes common credential patterns from text.
  *
- * LIMITATIONS:
- * - Only redacts credentials meeting minimum length requirements:
- *   - OpenAI keys: 20+ chars (sk-...) or 48+ chars (sk-proj-...)
- *   - API keys: 20+ chars
- *   - Tokens: 20+ chars
- *   - Passwords: 8+ chars
- * - Shorter credentials may pass through unsanitized
- * - Bearer tokens have no minimum length requirement (inconsistent with other patterns)
+ * Redacts the following credential types:
+ * - OpenAI keys: sk-*, sk-proj-*, sk-ant-* (20+ chars)
+ * - Perplexity keys: pplx-* (20+ chars)
+ * - AWS access keys: AKIA* (20 chars)
+ * - GitHub tokens: ghp_*, ghs_* (36+ chars)
+ * - JWT tokens: eyJ*.eyJ*.*
+ * - Bearer tokens
+ * - Generic API keys, tokens, passwords, secrets (8-20+ chars)
  *
- * These length constraints balance security with false positive prevention,
- * targeting the most common and dangerous credential formats.
+ * LIMITATIONS:
+ * - Shorter credentials may pass through unsanitized
+ * - Length constraints balance security with false positive prevention
  */
 export function sanitizeCredentials(text: string): string {
   const patterns = [
@@ -101,20 +102,40 @@ export function sanitizeCredentials(text: string): string {
     },
     { regex: /sk-[a-zA-Z0-9_-]{20,}/g, replacement: "sk-***REDACTED***" },
     {
-      regex: /Bearer\s+[a-zA-Z0-9_\-\.+\/=]+/gi,
+      regex: /AKIA[A-Z0-9]{16}/g,
+      replacement: "AKIA***REDACTED***",
+    },
+    {
+      regex: /ghp_[a-zA-Z0-9]{36,}/g,
+      replacement: "ghp_***REDACTED***",
+    },
+    {
+      regex: /ghs_[a-zA-Z0-9]{36,}/g,
+      replacement: "ghs_***REDACTED***",
+    },
+    {
+      regex: /eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g,
+      replacement: "***REDACTED_JWT***",
+    },
+    {
+      regex: /Bearer\s+[a-zA-Z0-9_\-.+\/=]+/gi,
       replacement: "Bearer ***REDACTED***",
     },
     {
-      regex: /api[_-]?key["\s:=]+[a-zA-Z0-9_\-\.\+\/=]{20,}/gi,
+      regex: /api[_-]?key["'\s:=]+[a-zA-Z0-9_\-.+\/=]{20,}/gi,
       replacement: "api_key: ***REDACTED***",
     },
     {
-      regex: /token["\s:=]+[a-zA-Z0-9_\-\.]{20,}/gi,
+      regex: /token["'\s:=]+[a-zA-Z0-9_\-.+\/=]{20,}/gi,
       replacement: "token: ***REDACTED***",
     },
     {
-      regex: /password["\s:=]+[^\s"']{8,}/gi,
+      regex: /password["'\s:=]+["']?([^"'\s]{8,})["']?/gi,
       replacement: "password: ***REDACTED***",
+    },
+    {
+      regex: /secret["'\s:=]+["']?([^"'\s]{8,})["']?/gi,
+      replacement: "secret: ***REDACTED***",
     },
   ];
 

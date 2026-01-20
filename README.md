@@ -192,9 +192,11 @@ const response = await client.chat.completions.create(
 Captured prompts are automatically sanitized to remove sensitive credentials:
 
 - API keys (OpenAI, Anthropic, Perplexity)
+- AWS access keys
+- GitHub tokens
+- JWT tokens
 - Bearer tokens
-- Passwords
-- Generic tokens and secrets
+- Passwords and secrets
 
 Prompts exceeding `maxPromptSize` are truncated and marked with `promptsTruncated: true`.
 

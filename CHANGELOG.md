@@ -9,13 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Prompt capture functionality with credential sanitization
-- Automatic redaction of sensitive credentials in captured prompts (API keys, tokens, passwords)
-- Anthropic API key pattern (`sk-ant-*`) to credential sanitization
+- Prompt capture functionality with comprehensive credential sanitization
+- Automatic redaction of sensitive credentials in captured prompts:
+  - OpenAI keys (sk-_, sk-proj-_, sk-ant-\*)
+  - Perplexity keys (pplx-\*)
+  - AWS access keys (AKIA\*)
+  - GitHub tokens (ghp*\*, ghs*\*)
+  - JWT tokens
+  - Bearer tokens
+  - Generic API keys, tokens, passwords, and secrets
 
 ### Security
 
-- Enhanced credential sanitization now redacts Anthropic API keys in captured prompts
+- Enhanced credential sanitization with support for multiple credential types
+- Fixed password regex pattern to properly handle quoted values
+- Improved character class consistency across all patterns
 
 ## [1.0.16] - 2026-01-12
 

@@ -19,6 +19,11 @@ import {
   ResponsesCreateParams,
   ResponsesResponse,
 } from "../../types/responses-api.js";
+import {
+  shouldCapturePrompts,
+  sanitizeCredentials,
+  getMaxPromptSize,
+} from "../../utils/prompt-extraction.js";
 
 const logger = getLogger();
 
@@ -37,29 +42,74 @@ export class StreamingWrapper
   private firstTokenTime?: number;
   private requestId: string;
   private usage: any = {};
+  private messages: any[];
+  private accumulatedContent: string = "";
 
   constructor(
     stream: AsyncIterable<OpenAI.ChatCompletionChunk>,
     config: Config,
     providerInfo: ProviderInfo,
     model: string,
+    messages: any[],
     metadata?: UsageMetadata
   ) {
     this.stream = stream;
     this.config = config;
     this.providerInfo = providerInfo;
     this.model = model;
+    this.messages = messages;
     this.metadata = metadata;
     this.startTime = Date.now();
     this.requestId = randomUUID();
   }
 
+  private buildTrackingPayload(
+    finishReason: string | null,
+    timeToFirstToken?: number
+  ) {
+    return {
+      requestId: this.requestId,
+      model: this.model,
+      promptTokens: this.usage.prompt_tokens || 0,
+      completionTokens: this.usage.completion_tokens || 0,
+      totalTokens: this.usage.total_tokens || 0,
+      reasoningTokens: this.usage.completion_tokens_details?.reasoning_tokens,
+      cachedTokens: this.usage.prompt_tokens_details?.cached_tokens,
+      duration: Date.now() - this.startTime,
+      finishReason,
+      usageMetadata: this.metadata,
+      isStreamed: true,
+      timeToFirstToken,
+      providerInfo: this.providerInfo,
+      messages: this.messages,
+      responseContent: this.accumulatedContent
+        ? sanitizeCredentials(this.accumulatedContent)
+        : undefined,
+    };
+  }
+
   async *[Symbol.asyncIterator](): AsyncIterator<OpenAI.ChatCompletionChunk> {
+    let completed = false;
     try {
       for await (const chunk of this.stream) {
         // Record time to first token
         if (!this.firstTokenTime && chunk.choices[0]?.delta?.content) {
           this.firstTokenTime = Date.now();
+        }
+
+        // Accumulate content for prompt capture
+        if (
+          chunk.choices[0]?.delta?.content &&
+          shouldCapturePrompts(this.metadata)
+        ) {
+          const maxSize = getMaxPromptSize();
+          const remaining = maxSize - this.accumulatedContent.length;
+          if (remaining > 0) {
+            this.accumulatedContent += chunk.choices[0].delta.content.slice(
+              0,
+              remaining
+            );
+          }
         }
 
         // Accumulate usage data
@@ -75,50 +125,26 @@ export class StreamingWrapper
         yield chunk;
       }
 
+      completed = true;
+
       // Stream completed - track usage
-      const duration = Date.now() - this.startTime;
       const timeToFirstToken = this.firstTokenTime
         ? this.firstTokenTime - this.startTime
         : undefined;
 
-      trackUsageAsync({
-        requestId: this.requestId,
-        model: this.model,
-        promptTokens: this.usage.prompt_tokens || 0,
-        completionTokens: this.usage.completion_tokens || 0,
-        totalTokens: this.usage.total_tokens || 0,
-        reasoningTokens: this.usage.completion_tokens_details?.reasoning_tokens,
-        cachedTokens: this.usage.prompt_tokens_details?.cached_tokens,
-        duration,
-        finishReason: null, // Will be in final chunk
-        usageMetadata: this.metadata,
-        isStreamed: true,
-        timeToFirstToken,
-        providerInfo: this.providerInfo,
-      });
+      trackUsageAsync(this.buildTrackingPayload(null, timeToFirstToken));
 
       logger.debug("Streaming completed", {
         requestId: this.requestId,
         model: this.model,
-        duration,
+        duration: Date.now() - this.startTime,
         timeToFirstToken,
       });
     } catch (error) {
-      const duration = Date.now() - this.startTime;
+      completed = true;
 
       // Track error
-      trackUsageAsync({
-        requestId: this.requestId,
-        model: this.model,
-        promptTokens: this.usage.prompt_tokens || 0,
-        completionTokens: this.usage.completion_tokens || 0,
-        totalTokens: this.usage.total_tokens || 0,
-        duration,
-        finishReason: "error",
-        usageMetadata: this.metadata,
-        isStreamed: true,
-        providerInfo: this.providerInfo,
-      });
+      trackUsageAsync(this.buildTrackingPayload("error"));
 
       logger.error("Streaming error", {
         error: error instanceof Error ? error.message : String(error),
@@ -126,6 +152,22 @@ export class StreamingWrapper
       });
 
       throw error;
+    } finally {
+      if (!completed) {
+        const timeToFirstToken = this.firstTokenTime
+          ? this.firstTokenTime - this.startTime
+          : undefined;
+
+        trackUsageAsync(
+          this.buildTrackingPayload("cancelled", timeToFirstToken)
+        );
+
+        logger.debug("Streaming cancelled", {
+          requestId: this.requestId,
+          model: this.model,
+          duration: Date.now() - this.startTime,
+        });
+      }
     }
   }
 }
@@ -157,6 +199,8 @@ export class CompletionsInterface {
       const duration = Date.now() - startTime;
 
       // Track usage
+      const responseContent = response.choices[0]?.message?.content;
+
       trackUsageAsync({
         requestId: response.id || requestId,
         model: response.model,
@@ -171,6 +215,11 @@ export class CompletionsInterface {
         usageMetadata: metadata,
         isStreamed: false,
         providerInfo: this.providerInfo,
+        messages: params.messages,
+        responseContent:
+          responseContent && shouldCapturePrompts(metadata)
+            ? sanitizeCredentials(responseContent)
+            : undefined,
       });
 
       logger.debug("Chat completion created", {
@@ -195,6 +244,7 @@ export class CompletionsInterface {
         usageMetadata: metadata,
         isStreamed: false,
         providerInfo: this.providerInfo,
+        messages: params.messages,
       });
 
       logger.error("Chat completion failed", {
@@ -228,6 +278,7 @@ export class CompletionsInterface {
       this.config,
       this.providerInfo,
       params.model,
+      params.messages,
       metadata
     );
   }
@@ -343,6 +394,10 @@ export class ResponsesInterface {
       // Track usage (Responses API has different usage structure)
       const usage = (response as any).usage;
       if (usage) {
+        const inputMessages = Array.isArray(params.input)
+          ? params.input
+          : [{ role: "user" as const, content: params.input }];
+
         trackUsageAsync({
           requestId: (response as any).id || requestId,
           model: (response as any).model || params.model,
@@ -356,6 +411,8 @@ export class ResponsesInterface {
           usageMetadata: metadata,
           isStreamed: false,
           providerInfo: this.providerInfo,
+          messages: inputMessages,
+          responseContent: (response as any).output || undefined,
         });
       }
 
@@ -428,6 +485,10 @@ export class ResponsesInterface {
         const duration = Date.now() - startTime;
         if (finalResponse?.usage) {
           const usage = finalResponse.usage;
+          const inputMessages = Array.isArray(params.input)
+            ? params.input
+            : [{ role: "user" as const, content: params.input }];
+
           trackUsageAsync({
             requestId: finalResponse.id || requestId,
             model: finalResponse.model || params.model,
@@ -441,6 +502,8 @@ export class ResponsesInterface {
             usageMetadata: metadata,
             isStreamed: true,
             providerInfo: self.providerInfo,
+            messages: inputMessages,
+            responseContent: fullContent,
           });
         }
 

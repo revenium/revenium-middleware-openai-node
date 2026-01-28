@@ -106,6 +106,28 @@ The middleware provides a Go-aligned API with the following main functions:
 
 **For complete API documentation and usage examples, see [`examples/README.md`](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/examples/README.md).**
 
+## Metadata Fields
+
+The middleware supports the following optional metadata fields for tracking:
+
+| Field                   | Type   | Description                                                  |
+| ----------------------- | ------ | ------------------------------------------------------------ |
+| `traceId`               | string | Unique identifier for session or conversation tracking       |
+| `taskType`              | string | Type of AI task being performed (e.g., "chat", "embedding")  |
+| `agent`                 | string | AI agent or bot identifier                                   |
+| `organizationName`      | string | Organization or company name (used for lookup/auto-creation) |
+| `productName`           | string | Your product or feature name (used for lookup/auto-creation) |
+| `subscriptionId`        | string | Subscription plan identifier                                 |
+| `responseQualityScore`  | number | Custom quality rating (0.0-1.0)                              |
+| `subscriber.id`         | string | Unique user identifier                                       |
+| `subscriber.email`      | string | User email address                                           |
+| `subscriber.credential` | object | Authentication credential (`name` and `value` fields)        |
+
+**All metadata fields are optional.** For complete metadata documentation and usage examples, see:
+
+- [`examples/README.md`](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/examples/README.md) - All usage examples
+- [Revenium API Reference](https://revenium.readme.io/reference/meter_ai_completion) - Complete API documentation
+
 ## Trace Visualization Fields
 
 The middleware automatically captures trace visualization fields for distributed tracing and analytics:
@@ -113,7 +135,7 @@ The middleware automatically captures trace visualization fields for distributed
 | Field                 | Type   | Description                                                                     | Environment Variable               |
 | --------------------- | ------ | ------------------------------------------------------------------------------- | ---------------------------------- |
 | `environment`         | string | Deployment environment (production, staging, development)                       | `REVENIUM_ENVIRONMENT`, `NODE_ENV` |
-| `operationType`       | string | Operation classification (CHAT, EMBED, IMAGE, AUDIO) - automatically detected   | N/A (auto-detected)                |
+| `operationType`       | string | Operation classification (CHAT, EMBED, etc.) - automatically detected           | N/A (auto-detected)                |
 | `operationSubtype`    | string | Additional detail (function_call, etc.) - automatically detected                | N/A (auto-detected)                |
 | `retryNumber`         | number | Retry attempt number (0 for first attempt, 1+ for retries)                      | `REVENIUM_RETRY_NUMBER`            |
 | `parentTransactionId` | string | Parent transaction reference for distributed tracing                            | `REVENIUM_PARENT_TRANSACTION_ID`   |
@@ -138,27 +160,73 @@ REVENIUM_TRANSACTION_NAME=Answer Customer Question
 REVENIUM_RETRY_NUMBER=0
 ```
 
-## Metadata Fields
+## Terminal Summary Output
 
-The middleware supports the following optional metadata fields for tracking:
+The middleware can optionally print a cost/metrics summary to the terminal after each API request. This is useful during development to see token usage and estimated costs without checking the dashboard.
 
-| Field                   | Type   | Description                                                 |
-| ----------------------- | ------ | ----------------------------------------------------------- |
-| `traceId`               | string | Unique identifier for session or conversation tracking      |
-| `taskType`              | string | Type of AI task being performed (e.g., "chat", "embedding") |
-| `agent`                 | string | AI agent or bot identifier                                  |
-| `organizationId`        | string | Organization or company identifier                          |
-| `productId`             | string | Your product or feature identifier                          |
-| `subscriptionId`        | string | Subscription plan identifier                                |
-| `responseQualityScore`  | number | Custom quality rating (0.0-1.0)                             |
-| `subscriber.id`         | string | Unique user identifier                                      |
-| `subscriber.email`      | string | User email address                                          |
-| `subscriber.credential` | object | Authentication credential (`name` and `value` fields)       |
+### Enabling Terminal Summary
 
-**All metadata fields are optional.** For complete metadata documentation and usage examples, see:
+Set the following environment variables:
 
-- [`examples/README.md`](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/examples/README.md) - All usage examples
-- [Revenium API Reference](https://revenium.readme.io/reference/meter_ai_completion) - Complete API documentation
+```env
+# Use 'true' or 'human' for human-readable output, 'json' for JSON output
+REVENIUM_PRINT_SUMMARY=true
+REVENIUM_TEAM_ID=your-team-id-here
+```
+
+Or configure programmatically:
+
+```typescript
+Initialize({
+  reveniumApiKey: "hak_your-api-key",
+  printSummary: true, // or 'human' or 'json'
+  teamId: "your-team-id",
+});
+```
+
+### Output Formats
+
+#### Human-Readable Format (default)
+
+Set `REVENIUM_PRINT_SUMMARY=true` or `REVENIUM_PRINT_SUMMARY=human`:
+
+```
+============================================================
+📊 REVENIUM USAGE SUMMARY
+============================================================
+🤖 Model: gpt-4o-mini
+🏢 Provider: OpenAI
+⏱️  Duration: 1.23s
+
+💬 Token Usage:
+   📥 Input Tokens:  150
+   📤 Output Tokens: 250
+   📊 Total Tokens:  400
+
+💰 Cost: $0.000450
+============================================================
+```
+
+#### JSON Format
+
+Set `REVENIUM_PRINT_SUMMARY=json` for machine-readable output:
+
+```json
+{
+  "model": "gpt-4o-mini",
+  "provider": "OpenAI",
+  "durationSeconds": 1.23,
+  "inputTokenCount": 150,
+  "outputTokenCount": 250,
+  "totalTokenCount": 400,
+  "cost": 0.00045,
+  "traceId": "abc-123"
+}
+```
+
+The JSON output includes all the same fields as the human-readable format and is ideal for log parsing, automation, and integration with other tools.
+
+**Note:** The `teamId` is required to display cost information. If not provided, the summary will show token usage but the `cost` field will be `null` with a `costStatus` of `"unavailable"`. When `teamId` is set but the cost hasn't been aggregated yet, the `cost` field will be `null` with a `costStatus` of `"pending"`. You can find your team ID in the Revenium web application.
 
 ## Prompt Capture
 
@@ -320,6 +388,39 @@ For detailed documentation, visit [docs.revenium.io](https://docs.revenium.io)
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/revenium/revenium-middleware-openai-node/blob/HEAD/CONTRIBUTING.md)
+
+## Testing
+
+The middleware includes comprehensive automated tests that fail the build when something is wrong.
+
+### Run All Tests
+
+Run unit, integration, and performance tests:
+
+```bash
+npm test
+```
+
+### Run Tests with Coverage
+
+```bash
+npm run test:coverage
+```
+
+### Run Tests in Watch Mode
+
+```bash
+npm run test:watch
+```
+
+### Test Requirements
+
+All tests are designed to:
+
+- ✅ Fail the build when something is wrong (`process.exit(1)`)
+- ✅ Pass when everything works correctly (`process.exit(0)`)
+- ✅ Provide clear error messages
+- ✅ Test trace field validation, environment detection, and region detection
 
 ## Code of Conduct
 

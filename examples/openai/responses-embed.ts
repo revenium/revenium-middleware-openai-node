@@ -13,8 +13,8 @@ async function main() {
 
   // Create with metadata
   const metadata: UsageMetadata = {
-    organizationId: "org-responses-embed-demo",
-    productId: "prod-openai-responses-embed",
+    organizationName: "org-responses-embed-demo",
+    productName: "prod-openai-responses-embed",
   };
 
   const embedding = await client.embeddings().create(
@@ -22,7 +22,7 @@ async function main() {
       model: "text-embedding-3-small",
       input: "Hello world",
     },
-    metadata
+    metadata,
   );
 
   console.log("Model:", embedding.model);

@@ -50,10 +50,22 @@ export interface UsageMetadata {
   /** User identification information (nested structure for detailed tracking) */
   subscriber?: Subscriber;
 
-  /** Organization or company identifier for multi-tenant applications */
+  /** Customer organization name for multi-tenant applications (used for lookup/auto-creation) */
+  organizationName?: string;
+  /**
+   * @deprecated Use organizationName instead. This field will be removed in a future version.
+   * Organization or company identifier for multi-tenant applications
+   */
   organizationId?: string;
-  /** Product or application identifier for usage segmentation */
+
+  /** Product or feature name that is using AI services (used for lookup/auto-creation) */
+  productName?: string;
+  /**
+   * @deprecated Use productName instead. This field will be removed in a future version.
+   * Product or application identifier for usage segmentation
+   */
   productId?: string;
+
   /** Subscription identifier for billing and plan management */
   subscriptionId?: string;
 
@@ -123,6 +135,13 @@ export interface AzureConfig {
 }
 
 /**
+ * Summary output format options
+ * - 'human': Human-readable formatted output with emojis (default when enabled)
+ * - 'json': JSON formatted output for automation/parsing
+ */
+export type SummaryFormat = "human" | "json";
+
+/**
  * Revenium configuration interface
  *
  * Main configuration interface for initializing the Revenium middleware.
@@ -141,6 +160,15 @@ export interface ReveniumConfig {
   azure?: AzureConfig;
   /** OpenAI API key (optional, can be set via environment variable) */
   openaiApiKey?: string;
+  /**
+   * Enable cost/metrics summary output to terminal after each API request.
+   * - true or 'human': Human-readable format with emojis
+   * - 'json': JSON format for automation
+   * - false: Disabled (default)
+   */
+  printSummary?: boolean | SummaryFormat;
+  /** Revenium team ID for fetching cost metrics from the API. If not provided, the summary will still be printed but without cost information. */
+  teamId?: string;
   /** Whether to capture and send prompts to Revenium API (default: false) */
   capturePrompts?: boolean;
   /** Maximum size in characters for captured prompts before truncation (default: 50000). Note: uses JavaScript string length (UTF-16 code units), not byte count. */
@@ -223,8 +251,8 @@ export interface ReveniumPayload {
   traceId?: string;
   taskType?: string;
   agent?: string;
-  organizationId?: string;
-  productId?: string;
+  organizationName?: string;
+  productName?: string;
   subscriber?: Subscriber;
   subscriptionId?: string;
   responseQualityScore?: number;

@@ -17,8 +17,8 @@ async function main() {
 
   // Create metadata
   const metadata = {
-    organizationId: "org-getting-started-demo",
-    productId: "prod-getting-started",
+    organizationName: "org-getting-started-demo",
+    productName: "prod-getting-started",
   };
 
   // Make request

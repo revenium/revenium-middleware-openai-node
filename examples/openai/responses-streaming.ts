@@ -18,8 +18,8 @@ async function main() {
 
   // Create a metadata
   const metadata: UsageMetadata = {
-    organizationId: "org-responses-streaming-demo",
-    productId: "prod-openai-responses",
+    organizationName: "org-responses-streaming-demo",
+    productName: "prod-openai-responses",
     taskType: "creative-writing",
   };
 
@@ -31,7 +31,7 @@ async function main() {
         input: "Write a short poem about the ocean.",
         stream: true as const,
       },
-      metadata
+      metadata,
     );
 
     // Process the stream
@@ -55,7 +55,7 @@ async function main() {
     console.error("Error:", (error as Error).message);
     console.error("Stack:", (error as Error).stack);
     console.log(
-      "\nNote: Responses API is experimental and may not be available in all OpenAI SDK versions"
+      "\nNote: Responses API is experimental and may not be available in all OpenAI SDK versions",
     );
   }
 }

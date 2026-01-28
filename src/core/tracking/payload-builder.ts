@@ -53,11 +53,15 @@ export async function buildPayload(
   request: OpenAIChatRequest | OpenAIEmbeddingRequest,
   startTime: number,
   duration: number,
-  providerInfo?: ProviderInfo,
+  providerInfo?: ProviderInfo
 ): Promise<ReveniumPayload> {
   const now = new Date().toISOString();
   const requestTime = new Date(startTime).toISOString();
   const usage = response.usage;
+
+  if (!usage) {
+    throw new Error("Response usage data is missing");
+  }
 
   // For Azure, use the deployment name as-is
   // The deployment name is what the user provided and should be sent to Revenium
@@ -68,10 +72,8 @@ export async function buildPayload(
     ? getProviderMetadata(providerInfo)
     : { provider: "OpenAI", modelSource: "OPENAI" };
 
-  // Build metadata fields using utility (eliminates repetitive spreading)
   const metadataFields = buildMetadataFields(request.usageMetadata);
 
-  // Get trace fields
   const environment = getEnvironment();
   const region = await getRegion();
   const credentialAlias = getCredentialAlias();
@@ -97,10 +99,8 @@ export async function buildPayload(
     inputTokenCount: usage.prompt_tokens,
     totalTokenCount: usage.total_tokens,
 
-    // Metadata fields (processed by utility)
     ...metadataFields,
 
-    // Trace fields
     environment: environment || undefined,
     region: region || undefined,
     credentialAlias: credentialAlias || undefined,
@@ -139,13 +139,35 @@ export async function buildPayload(
     };
   }
   const chatResponse = response as OpenAIChatResponse;
-  const chatRequest = request as OpenAIChatRequest;
   const chatUsage = chatResponse.usage;
+  const chatRequest = request as OpenAIChatRequest;
+
+  const attributes: Record<string, unknown> = {};
+  if (chatRequest.response_format) {
+    if (
+      typeof chatRequest.response_format === "object" &&
+      chatRequest.response_format !== null
+    ) {
+      const formatType = (chatRequest.response_format as any).type;
+      if (formatType) {
+        attributes.response_format_type = formatType;
+        if (formatType === "json_schema") {
+          const schemaName = (chatRequest.response_format as any).json_schema
+            ?.name;
+          if (schemaName) {
+            attributes.response_format_schema_name = schemaName;
+          }
+        }
+      }
+    } else {
+      attributes.response_format = chatRequest.response_format;
+    }
+  }
 
   const promptData = extractPrompts(
     chatRequest,
     chatResponse,
-    chatRequest.usageMetadata,
+    chatRequest.usageMetadata
   );
 
   return {
@@ -163,6 +185,7 @@ export async function buildPayload(
     isStreamed: Boolean(chatRequest.stream),
     // TODO: Implement real TTFB tracking for streaming requests
     timeToFirstToken: undefined,
+    ...(Object.keys(attributes).length > 0 && { attributes }),
     ...(promptData && {
       systemPrompt: promptData.systemPrompt,
       inputMessages: promptData.inputMessages,
@@ -179,7 +202,7 @@ export function buildImagePayload(
   startTime: number,
   duration: number,
   providerInfo?: ProviderInfo,
-  usageMetadata?: any,
+  usageMetadata?: any
 ): ReveniumPayload {
   const now = new Date().toISOString();
   const requestTime = new Date(startTime).toISOString();
@@ -253,7 +276,7 @@ export function buildAudioPayload(
   startTime: number,
   duration: number,
   providerInfo?: ProviderInfo,
-  usageMetadata?: any,
+  usageMetadata?: any
 ): ReveniumPayload {
   const now = new Date().toISOString();
   const requestTime = new Date(startTime).toISOString();

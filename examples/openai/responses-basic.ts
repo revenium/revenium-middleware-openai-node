@@ -17,8 +17,8 @@ async function main() {
 
   // Create with metadata
   const metadata: UsageMetadata = {
-    organizationId: "org-responses-basic-demo",
-    productId: "prod-openai-responses-basic",
+    organizationName: "org-responses-basic-demo",
+    productName: "prod-openai-responses-basic",
   };
 
   try {
@@ -27,7 +27,7 @@ async function main() {
         model: "gpt-4",
         input: "What is the capital of France?",
       },
-      metadata
+      metadata,
     );
 
     // Display response
@@ -36,7 +36,7 @@ async function main() {
   } catch (error) {
     console.error("Error:", (error as Error).message);
     console.log(
-      "\nNote: Responses API is experimental and may not be available in all OpenAI SDK versions"
+      "\nNote: Responses API is experimental and may not be available in all OpenAI SDK versions",
     );
   }
 }

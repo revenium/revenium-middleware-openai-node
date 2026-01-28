@@ -31,13 +31,14 @@ const METADATA_FIELD_MAP: MetadataFieldConfig[] = [
   { source: "taskType" },
   { source: "agent" },
   { source: "organizationId" },
+  { source: "organizationName" },
   { source: "productId" },
-  { source: "subscriber" }, // Pass through nested subscriber object directly
+  { source: "productName" },
+  { source: "subscriber" },
   { source: "subscriptionId" },
   {
     source: "responseQualityScore",
     transform: (value: unknown) => {
-      // Ensure quality score is between 0.0 and 1.0 (API spec requirement)
       if (typeof value === "number") return Math.max(0, Math.min(1, value));
       return value;
     },
@@ -51,30 +52,45 @@ const METADATA_FIELD_MAP: MetadataFieldConfig[] = [
  * a clean, testable way to handle metadata transformation.
  * Subscriber object is passed through directly without transformation.
  *
+ * Implements field migration: organizationName/productName take priority over
+ * organizationId/productId for backward compatibility.
+ *
  * @param usageMetadata - Source metadata from request
  * @returns Clean metadata object for payload
  */
 export function buildMetadataFields(
-  usageMetadata?: UsageMetadata
+  usageMetadata?: UsageMetadata,
 ): Record<string, unknown> {
   if (!usageMetadata) return {};
   const result: Record<string, unknown> = {};
 
-  // Process all metadata fields including nested subscriber object
   for (const config of METADATA_FIELD_MAP) {
     const value = usageMetadata[config.source];
 
-    // Skip undefined values (but allow null, empty strings, objects, etc.)
     if (value === undefined) continue;
 
-    // Apply transformation if configured
+    // Skip deprecated fields - they'll be handled by migration logic below
+    if (config.source === "organizationId" || config.source === "productId") {
+      continue;
+    }
+
     const transformedValue = config.transform ? config.transform(value) : value;
 
-    // Use target field name or default to source
     const targetField = config.target || config.source;
 
     result[targetField] = transformedValue;
   }
+
+  // Handle field migration: new names take priority
+  if (usageMetadata.organizationName || usageMetadata.organizationId) {
+    result.organizationName =
+      usageMetadata.organizationName || usageMetadata.organizationId;
+  }
+
+  if (usageMetadata.productName || usageMetadata.productId) {
+    result.productName = usageMetadata.productName || usageMetadata.productId;
+  }
+
   return result;
 }
 
@@ -87,7 +103,7 @@ export function buildMetadataFields(
  */
 export function validateMetadata(
   usageMetadata?: UsageMetadata,
-  requiredFields: (keyof UsageMetadata)[] = []
+  requiredFields: (keyof UsageMetadata)[] = [],
 ): {
   isValid: boolean;
   missingFields: string[];
@@ -117,7 +133,7 @@ export function validateMetadata(
       // "typically on a 0.0-1.0 scale"
       if (typeof score !== "number" || score < 0 || score > 1) {
         warnings.push(
-          "responseQualityScore should be a number between 0.0 and 1.0"
+          "responseQualityScore should be a number between 0.0 and 1.0",
         );
       }
     }
@@ -127,7 +143,7 @@ export function validateMetadata(
       !usageMetadata.subscriber.email.includes("@")
     ) {
       warnings.push(
-        "subscriber.email does not appear to be a valid email address"
+        "subscriber.email does not appear to be a valid email address",
       );
     }
   }
@@ -163,7 +179,7 @@ export function mergeMetadata(
  * @returns Extracted metadata and cleaned parameters
  */
 export function extractMetadata<T extends Record<string, unknown>>(
-  params: T & { usageMetadata?: UsageMetadata }
+  params: T & { usageMetadata?: UsageMetadata },
 ): {
   metadata: UsageMetadata | undefined;
   cleanParams: Omit<T, "usageMetadata">;
@@ -183,7 +199,7 @@ export function extractMetadata<T extends Record<string, unknown>>(
  * @returns Logging context object with sanitized PII
  */
 export function createLoggingContext(
-  usageMetadata?: UsageMetadata
+  usageMetadata?: UsageMetadata,
 ): Record<string, unknown> {
   if (!usageMetadata) return {};
 
@@ -199,9 +215,10 @@ export function createLoggingContext(
     traceId: usageMetadata.traceId,
     taskType: usageMetadata.taskType,
     subscriberId: usageMetadata.subscriber?.id,
-    subscriberEmail: sanitizedSubscriber?.email, // ← Now masked: us***@example.com
-    organizationId: usageMetadata.organizationId,
-    productId: usageMetadata.productId,
+    subscriberEmail: sanitizedSubscriber?.email,
+    organizationName:
+      usageMetadata.organizationName || usageMetadata.organizationId,
+    productName: usageMetadata.productName || usageMetadata.productId,
     agent: usageMetadata.agent,
   };
 }
@@ -213,7 +230,7 @@ export function createLoggingContext(
  * @returns Sanitized metadata safe for logging
  */
 export function sanitizeMetadataForLogging(
-  usageMetadata?: UsageMetadata
+  usageMetadata?: UsageMetadata,
 ): Record<string, unknown> {
   if (!usageMetadata) return {};
 
@@ -234,7 +251,7 @@ export function sanitizeMetadataForLogging(
       // Mask email: handles single-char emails (a@x.com → a***@x.com)
       sanitizedSubscriber.email = subscriber.email.replace(
         /(.{1,2}).*(@.*)/,
-        "$1***$2"
+        "$1***$2",
       );
     }
 

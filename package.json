@@ -1,6 +1,6 @@
 {
   "name": "@revenium/openai",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Transparent TypeScript middleware for automatic Revenium usage tracking with OpenAI",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",

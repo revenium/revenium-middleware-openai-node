@@ -120,8 +120,8 @@ npx tsx examples/openai/metadata.ts
 - `traceId` - Session or conversation tracking identifier
 - `taskType` - Type of AI task being performed
 - `agent` - AI agent or bot identifier
-- `organizationId` - Organization identifier
-- `productId` - Product or service identifier
+- `organizationName` - Organization name (used for lookup/auto-creation)
+- `productName` - Product or service name (used for lookup/auto-creation)
 - `subscriptionId` - Subscription tier identifier
 - `responseQualityScore` - Quality rating (0.0-1.0)
 - `subscriber` - Nested subscriber object with `id`, `email`, `credential` (with `name` and `value`)

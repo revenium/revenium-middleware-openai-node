@@ -14,8 +14,8 @@ async function main() {
 
   // Create a metadata
   const metadata: UsageMetadata = {
-    organizationId: "org-azure-demo",
-    productId: "prod-azure-integration",
+    organizationName: "org-azure-demo",
+    productName: "prod-azure-integration",
     taskType: "question-answering",
     agent: "azure-assistant",
   };
@@ -49,7 +49,7 @@ async function main() {
         max_completion_tokens: 2000, // Increased for reasoning models (gpt-5-mini uses reasoning tokens)
         // Note: Reasoning models like gpt-5-mini only support default temperature (1.0)
       },
-      metadata
+      metadata,
     );
 
   // Display the response

@@ -5,11 +5,33 @@
  * Separated from validation and management for single responsibility.
  */
 
-import { ReveniumConfig, AzureConfig } from "../../types";
+import { ReveniumConfig, AzureConfig, SummaryFormat } from "../../types";
 import { config as loadDotenv } from "dotenv";
 import { existsSync } from "fs";
 import { join } from "path";
 import { DEFAULT_REVENIUM_BASE_URL } from "../../utils/constants.js";
+
+/**
+ * Parse REVENIUM_PRINT_SUMMARY environment variable value
+ * @param value - The raw environment variable value
+ * @returns boolean | SummaryFormat - false if disabled, 'human' or 'json' if enabled
+ */
+function parsePrintSummaryValue(
+  value: string | undefined
+): boolean | SummaryFormat {
+  if (!value) return false;
+
+  const normalized = value.toLowerCase().trim();
+
+  if (normalized === "json") {
+    return "json";
+  }
+  if (normalized === "human" || normalized === "true") {
+    return "human";
+  }
+
+  return false;
+}
 
 /**
  * Flag to track if .env files have been loaded
@@ -53,13 +75,27 @@ export function loadConfigFromEnv(): ReveniumConfig | null {
     process.env.REVENIUM_BASE_URL ||
     DEFAULT_REVENIUM_BASE_URL;
   const openaiApiKey = process.env.OPENAI_API_KEY;
+  const printSummary = parsePrintSummaryValue(
+    process.env.REVENIUM_PRINT_SUMMARY
+  );
+  const teamId = process.env.REVENIUM_TEAM_ID;
+  const capturePromptsEnv = process.env.REVENIUM_CAPTURE_PROMPTS;
 
   if (!reveniumApiKey) return null;
-  return {
+
+  const config: ReveniumConfig = {
     reveniumApiKey,
     reveniumBaseUrl,
     openaiApiKey,
+    printSummary,
+    teamId,
   };
+
+  if (capturePromptsEnv !== undefined) {
+    config.capturePrompts = capturePromptsEnv.toLowerCase() === "true";
+  }
+
+  return config;
 }
 
 /**

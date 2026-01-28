@@ -18,8 +18,8 @@ async function main() {
 
   // Create a metadata
   const metadata: UsageMetadata = {
-    organizationId: "org-azure-responses",
-    productId: "prod-azure-responses",
+    organizationName: "org-azure-responses",
+    productName: "prod-azure-responses",
   };
 
   try {
@@ -28,7 +28,7 @@ async function main() {
         model: "gpt-5-mini-2", // Your Azure deployment name
         input: "What is the capital of France?",
       },
-      metadata
+      metadata,
     );
 
     // Display response
@@ -37,7 +37,7 @@ async function main() {
   } catch (error) {
     console.error("Error:", (error as Error).message);
     console.log(
-      "\nNote: Responses API is experimental and may not be available in all OpenAI SDK versions"
+      "\nNote: Responses API is experimental and may not be available in all OpenAI SDK versions",
     );
   }
 }

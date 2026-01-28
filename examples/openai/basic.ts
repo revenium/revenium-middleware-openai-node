@@ -12,8 +12,8 @@ async function main() {
   // Get client
   const client = GetClient();
   const metadata: UsageMetadata = {
-    organizationId: "org-basic-demo",
-    productId: "prod-openai-basic",
+    organizationName: "org-basic-demo",
+    productName: "prod-openai-basic",
   };
 
   // Create chat completion
@@ -32,7 +32,7 @@ async function main() {
         ],
         max_tokens: 1000,
       },
-      metadata
+      metadata,
     );
 
   // Display response

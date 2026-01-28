@@ -15,8 +15,8 @@ async function main() {
 
   // Create a metadata
   const metadata: UsageMetadata = {
-    organizationId: "org-streaming-demo",
-    productId: "prod-openai-streaming",
+    organizationName: "org-streaming-demo",
+    productName: "prod-openai-streaming",
     taskType: "creative-writing",
     agent: "story-generator",
   };
@@ -41,7 +41,7 @@ async function main() {
         max_tokens: 1000,
         stream: true as const,
       },
-      metadata
+      metadata,
     );
 
   // Process the stream

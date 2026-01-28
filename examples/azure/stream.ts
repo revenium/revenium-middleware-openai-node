@@ -14,8 +14,8 @@ async function main() {
 
   // Create a metadata
   const metadata: UsageMetadata = {
-    organizationId: "org-azure-streaming",
-    productId: "prod-azure-integration",
+    organizationName: "org-azure-streaming",
+    productName: "prod-azure-integration",
     taskType: "creative-writing",
     agent: "azure-poet",
   };
@@ -39,7 +39,7 @@ async function main() {
         max_completion_tokens: 2000,
         stream: true as const,
       },
-      metadata
+      metadata,
     );
 
   // Process the stream

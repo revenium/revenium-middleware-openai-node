@@ -15,11 +15,11 @@ async function main() {
   // Optional metadata for advanced reporting, lineage tracking, and cost allocation
   const metadata: UsageMetadata = {
     // Organization & billing
-    organizationId: "org-metadata-demo",
+    organizationName: "org-metadata-demo",
     subscriptionId: "plan-premium-2025",
 
     // Product & task tracking
-    productId: "ai-assistant",
+    productName: "ai-assistant",
     taskType: "explanation-request",
     agent: "openai-metadata-chat-node",
 
@@ -27,7 +27,7 @@ async function main() {
     traceId: "session-" + Date.now(),
 
     // Quality metrics
-    responseQualityScore: 0.95, // 0.0-1.0 scale
+    responseQualityScore: 0.95,
 
     // User tracking
     subscriber: {
@@ -54,7 +54,7 @@ async function main() {
         ],
         max_tokens: 1000,
       },
-      metadata
+      metadata,
     );
 
   // Display response

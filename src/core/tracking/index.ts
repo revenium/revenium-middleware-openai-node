@@ -23,5 +23,7 @@ export {
   trackAudioUsageAsync,
 } from "./usage-tracker.js";
 
+export { printUsageSummary } from "./summary-printer.js";
+
 // Export utility functions
 export { mapStopReason } from "../../utils/stop-reason-mapper.js";

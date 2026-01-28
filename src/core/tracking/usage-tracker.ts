@@ -16,6 +16,7 @@ import { getLogger } from "../config";
 import { sendToRevenium } from "./api-client.js";
 import { buildPayload } from "./payload-builder.js";
 import { safeAsyncOperation } from "../../utils/error-handler.js";
+import { printUsageSummary } from "./summary-printer.js";
 
 // Global logger
 const logger = getLogger();
@@ -40,7 +41,13 @@ export async function sendReveniumMetrics(
         duration,
         providerInfo
       );
-      await sendToRevenium(payload);
+      try {
+        await sendToRevenium(payload);
+      } finally {
+        // Print summary regardless of whether sendToRevenium succeeded or failed
+        // This ensures local visibility even when tracking delivery fails
+        printUsageSummary(payload);
+      }
     },
     "Chat completion tracking",
     {
@@ -72,7 +79,13 @@ export async function sendReveniumEmbeddingsMetrics(
         duration,
         providerInfo
       );
-      await sendToRevenium(payload);
+      try {
+        await sendToRevenium(payload);
+      } finally {
+        // Print summary regardless of whether sendToRevenium succeeded or failed
+        // This ensures local visibility even when tracking delivery fails
+        printUsageSummary(payload);
+      }
     },
     "Embeddings tracking",
     {
@@ -101,6 +114,8 @@ export function trackUsageAsync(trackingData: {
   isStreamed?: boolean;
   timeToFirstToken?: number;
   providerInfo?: ProviderInfo;
+  messages?: any[];
+  responseContent?: string;
 }): void {
   const mockResponse = {
     id: trackingData.requestId,
@@ -119,13 +134,16 @@ export function trackUsageAsync(trackingData: {
     choices: [
       {
         finish_reason: trackingData.finishReason,
+        ...(trackingData.responseContent && {
+          message: { content: trackingData.responseContent, role: "assistant" },
+        }),
       },
     ],
   };
 
   const mockRequest: OpenAIChatRequest = {
     model: trackingData.model,
-    messages: [], // Mock empty messages array for type compliance
+    messages: trackingData.messages || [],
     usageMetadata: trackingData.usageMetadata,
     stream: trackingData.isStreamed,
   };
@@ -237,7 +255,13 @@ export async function trackImageUsageAsync(
         providerInfo,
         metadata
       );
-      await sendToRevenium(payload);
+      try {
+        await sendToRevenium(payload);
+      } finally {
+        // Print summary regardless of whether sendToRevenium succeeded or failed
+        // This ensures local visibility even when tracking delivery fails
+        printUsageSummary(payload);
+      }
     })
     .then(() => {
       logger.debug("Image tracking completed successfully", {
@@ -284,7 +308,13 @@ export async function trackAudioUsageAsync(
         providerInfo,
         metadata
       );
-      await sendToRevenium(payload);
+      try {
+        await sendToRevenium(payload);
+      } finally {
+        // Print summary regardless of whether sendToRevenium succeeded or failed
+        // This ensures local visibility even when tracking delivery fails
+        printUsageSummary(payload);
+      }
     })
     .then(() => {
       logger.debug("Audio tracking completed successfully", {

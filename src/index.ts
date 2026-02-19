@@ -117,3 +117,22 @@ export {
   validateAzureConfig,
   getProviderMetadata,
 } from "./core/providers";
+
+export type {
+  ToolContext,
+  ToolMetadata,
+  ToolEventPayload,
+  ToolCallReport,
+} from "./types/tool-metering.js";
+
+export {
+  meterTool,
+  reportToolCall,
+} from "./core/tracking/tool-tracker.js";
+
+export {
+  setToolContext,
+  getToolContext,
+  clearToolContext,
+  runWithToolContext,
+} from "./core/tracking/tool-context.js";

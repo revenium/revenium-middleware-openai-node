@@ -318,3 +318,5 @@ export interface AudioSpeechAttributes {
 export type AudioAttributes =
   | AudioTranscriptionAttributes
   | AudioSpeechAttributes;
+
+export * from "./tool-metering.js";

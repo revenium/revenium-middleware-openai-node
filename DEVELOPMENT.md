@@ -166,7 +166,7 @@ for await (const chunk of stream) {
 
 ## Complete Examples
 
-See the [examples/](https://github.com/revenium/revenium-middleware-openai-node-internal/tree/HEAD/examples) directory for complete working examples:
+See the [examples/](https://github.com/revenium/revenium-middleware-openai-node/tree/HEAD/examples) directory for complete working examples:
 
 - `getting_started.ts` - Simple entry point
 - `openai/basic.ts` - Chat and embeddings

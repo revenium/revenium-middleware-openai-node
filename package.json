@@ -1,6 +1,6 @@
 {
   "name": "@revenium/openai",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Transparent TypeScript middleware for automatic Revenium usage tracking with OpenAI",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -25,6 +25,13 @@
     "dev": "tsc --watch",
     "clean": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', {recursive: true, force: true})\"",
     "prepublishOnly": "npm run clean && npm run build",
+    "test": "jest",
+    "test:unit": "jest --testPathPatterns=tests/unit",
+    "test:integration": "jest --testPathPatterns=tests/integration --passWithNoTests",
+    "test:performance": "jest --testPathPatterns=tests/performance --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "jest --testPathPatterns=tests/integration/trace-fields.test.ts",
     "example:getting-started": "npm run build && npx tsx examples/getting_started.ts",
     "example:openai-basic": "npm run build && npx tsx examples/openai/basic.ts",
     "example:openai-metadata": "npm run build && npx tsx examples/openai/metadata.ts",
@@ -59,9 +66,13 @@
     "url": "https://github.com/revenium/revenium-middleware-openai-node/issues"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
     "dotenv": "^16.5.0",
+    "jest": "^30.2.0",
     "rimraf": "^6.0.1",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.0.0"
